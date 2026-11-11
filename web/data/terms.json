@@ -1,0 +1,662 @@
+[
+  {
+    "id": "extreme_wind",
+    "term": "极大风速",
+    "aliases": [
+      "极大风",
+      "极大风力",
+      "极大风速"
+    ],
+    "category": "风",
+    "definition": "某时段内出现的最大瞬时风速，通常为某时刻前 3 秒的平均风速；需与“最大风速”区分。",
+    "time_scale": "3 秒",
+    "range": "依观测值而定；按风力等级换算时，17 级为 56.1–61.2 m/s。",
+    "equivalents": [
+      "17 级 = 56.1–61.2 m/s = 202–220 km/h；陆上极少见，摧毁力极大"
+    ],
+    "misuses": [
+      "把极大风速当平均风速",
+      "把极大风速当最大风速",
+      "不注明平均时长就直接比较"
+    ],
+    "standard": "GB/T 35227-2017《地面气象观测规范 风向和风速》",
+    "url": "https://www.cma.gov.cn/zfxxgk/gknr/flfgbz/bz/202209/P020220921690340358306.pdf",
+    "related": [
+      "最大风速",
+      "平均风速",
+      "阵风"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "max_wind",
+    "term": "最大风速",
+    "aliases": [
+      "最大风",
+      "最大风力",
+      "最大风速"
+    ],
+    "category": "风",
+    "definition": "某时段内 10 分钟平均风速的最大值；需与“极大风速”区分。",
+    "time_scale": "10 分钟",
+    "range": "依观测值而定。",
+    "equivalents": [
+      "与极大风速的差值取决于阵风系数"
+    ],
+    "misuses": [
+      "把最大风速当阵风",
+      "用最大风速描述瞬时破坏力"
+    ],
+    "standard": "GB/T 35227-2017《地面气象观测规范 风向和风速》",
+    "url": "https://www.cma.gov.cn/zfxxgk/gknr/flfgbz/bz/202209/P020220921690340358306.pdf",
+    "related": [
+      "极大风速",
+      "平均风速",
+      "阵风"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "mean_wind",
+    "term": "平均风速",
+    "aliases": [
+      "平均风",
+      "平均风力",
+      "平均风速"
+    ],
+    "category": "风",
+    "definition": "10 分钟平均风速；是风力等级标准的基准量。",
+    "time_scale": "10 分钟",
+    "range": "依观测值而定。",
+    "equivalents": [
+      "5级（清风）小树摇摆；8级（大风）折断树枝；10级（狂风）拔起树木"
+    ],
+    "misuses": [
+      "把平均风速当极大风速",
+      "把阵风当持续风"
+    ],
+    "standard": "GB/T 35227-2017；GB/T 28591-2012",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "极大风速",
+      "最大风速",
+      "风力等级"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "gust",
+    "term": "阵风",
+    "aliases": [
+      "阵风",
+      "gust"
+    ],
+    "category": "风",
+    "definition": "3 秒平均的峰值风速。",
+    "time_scale": "3 秒",
+    "range": "依观测值而定；通常大于平均风速。",
+    "equivalents": [
+      "阵风系数 = 阵风 / 平均风速"
+    ],
+    "misuses": [
+      "把阵风当持续风",
+      "用阵风等级描述平均风力"
+    ],
+    "standard": "WMO/地面气象观测规范",
+    "url": "https://www.cma.gov.cn/zfxxgk/gknr/flfgbz/bz/202209/P020220921690340358306.pdf",
+    "related": [
+      "极大风速",
+      "最大风速",
+      "平均风速"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "wind_force",
+    "term": "17级（风速等级）",
+    "aliases": [
+      "17级",
+      "17 级",
+      "风力等级",
+      "18级",
+      "18 级",
+      "17级以上"
+    ],
+    "category": "风",
+    "definition": "按 10 分钟平均风速划分的蒲福风级。17 级 = 56.1–61.2 m/s；超过 61.2 m/s 记“17 级以上”，陆地极为鲜见，多数 17 级风出现在超强台风的中心内核区域。",
+    "time_scale": "10 分钟",
+    "range": "17 级：56.1–61.2 m/s = 202–220 km/h。",
+    "equivalents": [
+      "约 200 km/h 的车速；树木连根拔起，惊涛巨浪。"
+    ],
+    "misuses": [
+      "与 1 分钟/2 分钟平均混用",
+      "自造 18 级/20 级",
+      "把 17 级等同于超强台风"
+    ],
+    "standard": "GB/T 28591-2012《风力等级》",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "超强台风",
+      "极大风速",
+      "平均风速"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "super_typhoon",
+    "term": "超强台风",
+    "aliases": [
+      "超强台风",
+      "SuperTY",
+      "16级",
+      "16 级"
+    ],
+    "category": "台风",
+    "definition": "底层中心附近最大平均风速 ≥51.0 m/s的台风，风速 16 级或以上，不等于“17 级”。",
+    "time_scale": "2 分钟（台风业务时间尺度）",
+    "range": "≥51.0 m/s，16 级或以上。",
+    "equivalents": [
+      "51.0 m/s ≈ 184 km/h；强台风：41.5–50.9 m/s；台风：32.7–41.4 m/s"
+    ],
+    "misuses": [
+      "把超强台风等同于 17 级",
+      "用巅峰强度描述登陆强度",
+      "不注明平均时长"
+    ],
+    "standard": "GB/T 19201-2006《热带气旋等级》",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=016555C8A7A7F9EDDF96CE84A88EAFC6",
+    "related": [
+      "风力等级（17 级）",
+      "极大风速"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "cyclone_names",
+    "term": "热带气旋 / 台风 / 飓风 / 气旋",
+    "aliases": [
+      "热带气旋",
+      "台风",
+      "飓风",
+      "气旋",
+      "热带风暴",
+      "强热带风暴",
+      "热带低压",
+      "tropical cyclone",
+      "typhoon",
+      "hurricane"
+    ],
+    "category": "台风",
+    "definition": "热带气旋是暖心、低压、有组织的旋转风暴，统称 tropical cyclone。西北太平洋及南海称台风（typhoon）；北大西洋和东北太平洋称飓风（hurricane）；印度洋和南太平洋多称气旋（cyclone）。热带低压、热带风暴、强热带风暴是强度等级，不是按海域改名。",
+    "time_scale": "按最大持续风速分级；CMA 用 2 分钟平均，Saffir-Simpson 飓风等级用 1 分钟平均",
+    "range": "CMA：热带低压 10.8–17.1 m/s；热带风暴 17.2–24.4；强热带风暴 24.5–32.6；台风 32.7–41.4；强台风 41.5–50.9；超强台风 ≥51.0 m/s。",
+    "equivalents": [
+      "西北太平洋/南海：台风；北大西洋/东北太平洋：飓风；印度洋/南太平洋：气旋；同一个热带气旋在不同海域按当地习惯叫法不同，强度等级阈值也不同"
+    ],
+    "misuses": [
+      "把飓风、台风当成两种不同的天气系统",
+      "把热带风暴当成某个海域的专名",
+      "用 1 分钟平均的飓风等级直接套 CMA 的 2 分钟平均"
+    ],
+    "standard": "GB/T 19201-2006《热带气旋等级》；WMO 热带气旋命名与分级",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=016555C8A7A7F9EDDF96CE84A88EAFC6",
+    "related": [
+      "超强台风",
+      "风力等级（17 级）",
+      "极大风速"
+    ],
+    "equivalents_label": "命名"
+  },
+  {
+    "id": "extreme_rain",
+    "term": "特大暴雨",
+    "aliases": [
+      "特大暴雨",
+      "特大暴雨量级"
+    ],
+    "category": "降水",
+    "definition": "24 小时降水量 ≥250 mm；12 小时口径为 ≥140 mm。它是 24 小时/12 小时等级，不是 1 小时概念。",
+    "time_scale": "24 小时 / 12 小时",
+    "range": "24h ≥250 mm；12h ≥140 mm。暴雨：24h 50–99.9；大暴雨：24h 100–249.9。",
+    "equivalents": [
+      "250 mm = 250 L/m²；累计约 25 cm 的水层；在 1 平方米倒 250 瓶 1 升水"
+    ],
+    "misuses": [
+      "用 1 小时雨量套 24 小时等级",
+      "把短时强降水叫特大暴雨",
+      "用单站代表全市"
+    ],
+    "standard": "GB/T 28592-2012《降水量等级》",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=B4A00E4ABCF80F8C6A048C1D0121A97D",
+    "related": [
+      "短时强降水",
+      "暴雨"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "super_rain",
+    "term": "“超级暴雨”",
+    "aliases": [
+      "超级暴雨",
+      "超级大暴雨",
+      "超级雨"
+    ],
+    "category": "降水",
+    "definition": "“超级”不是中国气象业务等级；降水等级只有暴雨、大暴雨、特大暴雨。“超级暴雨”是强度修饰词，必须换算成具体时段降水量后再判断。",
+    "time_scale": "需说明 1 小时 / 12 小时 / 24 小时 / 过程",
+    "range": "没有官方“超级暴雨”阈值；24h ≥250 mm 已经是特大暴雨。",
+    "equivalents": [
+      "1000 mm/24h 是特大暴雨阈值（250 mm）的 4 倍，属于极端异常量级，必须有站点、时段和官方来源。"
+    ],
+    "misuses": [
+      "把“超级”当气象等级",
+      "用“超级暴雨”代替具体雨量",
+      "不注明时间窗口就直接说 1000 mm"
+    ],
+    "standard": "GB/T 28592-2012《降水量等级》；中国气象局业务规定",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=B4A00E4ABCF80F8C6A048C1D0121A97D",
+    "related": [
+      "特大暴雨",
+      "短时强降水",
+      "暴雨"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "short_rain",
+    "term": "短时强降水",
+    "aliases": [
+      "短时强降水",
+      "小时雨强",
+      "1小时雨量",
+      "1 小时雨量"
+    ],
+    "category": "降水",
+    "definition": "通常指 1 小时降水量 ≥20 mm（具体以业务规定为准）；与 24 小时“暴雨/特大暴雨”不是同一口径。",
+    "time_scale": "1 小时",
+    "range": "1h ≥20 mm（常见业务阈值，需注明来源）。",
+    "equivalents": [
+      "发生 100 mm的短时强降水时，雨幕浓密，视线快速变差，能见度常跌到几百米甚至更低；雨砸在地面大量起水花、白雾。"
+    ],
+    "misuses": [
+      "把短时强降水叫特大暴雨",
+      "用 1 小时雨量套 24 小时等级"
+    ],
+    "standard": "中国气象局业务规定（以最新文件为准）",
+    "url": "https://www.cma.gov.cn",
+    "related": [
+      "特大暴雨"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "return_period",
+    "term": "百年一遇",
+    "aliases": [
+      "百年一遇",
+      "50年一遇",
+      "五十年一遇",
+      "重现期"
+    ],
+    "category": "概率",
+    "definition": "重现期 100 年，即年超越概率 1%；并非“一百年只发生一次”。",
+    "time_scale": "年",
+    "range": "年超越概率 1%；未来 30 年至少一次约 26%，100 年约 63%。",
+    "equivalents": [
+      "一百年里面接近 37% 的概率一次都不出现"
+    ],
+    "misuses": [
+      "当成“一百年一次”",
+      "当成“史上最强”",
+      "不说明变量/区域/资料年限"
+    ],
+    "standard": "水文/气象频率分析规范（按变量选择）",
+    "url": "https://www.cma.gov.cn",
+    "related": [
+      "重现期"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "extreme_cold",
+    "term": "极寒",
+    "aliases": [
+      "极寒",
+      "极寒天气",
+      "极端低温"
+    ],
+    "category": "温度",
+    "definition": "“极寒”不是标准气象术语；寒潮有 GB/T 21987-2017 等级；极端低温需用百分位/重现期定义。",
+    "time_scale": "日 / 过程",
+    "range": "需说明指标（日最低温/降温幅度）、站点、基准期。",
+    "equivalents": [
+      "寒潮判定通常看 48h 降温幅度与最低气温"
+    ],
+    "misuses": [
+      "把极寒当寒潮",
+      "用单站低温代表全省",
+      "不说明基准期"
+    ],
+    "standard": "GB/T 21987-2017《寒潮等级》",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "寒潮",
+      "极端低温"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "significant_wave",
+    "term": "有效波高（10 米浪）",
+    "aliases": [
+      "有效波高",
+      "10米浪",
+      "10 米浪",
+      "巨浪",
+      "最大波高"
+    ],
+    "category": "海洋",
+    "definition": "有效波高是最高的 1/3 波浪的平均波高；需与“最大波高”区分，后者是单个最高波。",
+    "time_scale": "观测时段",
+    "range": "10 m 有效波高约 3 层楼高；最大波高可能更高。",
+    "equivalents": [
+      "约 3 层楼高，对中小型船舶极危险"
+    ],
+    "misuses": [
+      "把有效波高当最大波高",
+      "近岸/外海混用",
+      "不说明观测/预报"
+    ],
+    "standard": "海浪观测/预报规范",
+    "url": "https://www.nmefc.cn",
+    "related": [
+      "最大波高",
+      "风暴潮"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "oni",
+    "term": "ONI / Niño3.4",
+    "aliases": [
+      "ONI",
+      "Niño3.4",
+      "Nino3.4",
+      "尼诺3.4",
+      "海温指数",
+      "厄尔尼诺"
+    ],
+    "category": "ENSO",
+    "definition": "ONI 是 Niño3.4 区海温距平的 3 个月滑动平均；\n发生厄尔尼诺现象（El Niño） 判定通常要求 ≥0.5℃ 持续至少 5 个月。",
+    "time_scale": "3 个月滑动",
+    "range": "弱：0.5–1.2；中等：1.3–1.9；强：2.0–2.4；超强：≥2.5（按 GB/T 33666-2017）。",
+    "equivalents": [
+      "3 个月滑动平均 ≠ 单月值 ≠ 候/旬尺度"
+    ],
+    "misuses": [
+      "把 ONI 当日均值/月值",
+      "把 Niño1+2/3/3.4 与 ONI 混用",
+      "不说明数据集/基准期"
+    ],
+    "standard": "GB/T 33666-2017《厄尔尼诺/拉尼娜事件判别方法》",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "超强厄尔尼诺",
+      "Niño3",
+      "Niño1+2"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "super_elnino",
+    "term": "超强厄尔尼诺",
+    "aliases": [
+      "超强厄尔尼诺",
+      "最强厄尔尼诺",
+      "超强厄尔尼诺事件"
+    ],
+    "category": "ENSO",
+    "definition": "按 GB/T 33666-2017，事件峰值 3 个月滑动平均 ≥2.5℃ 为超强事件；需说明指数、数据集、基准期。",
+    "time_scale": "3 个月滑动",
+    "range": "≥2.5℃（超强）；2.0–2.4℃（强）。",
+    "equivalents": [
+      "发生超强厄尔尼诺时，信风减弱甚至反向，暖水向东涌，中东太平洋大范围异常增暖；大范围暖海温加热上空大气，对流中心东移，全球降雨带、副热带高压位置全部打乱"
+    ],
+    "misuses": [
+      "不说指数/数据集",
+      "把预测峰值当已发生",
+      "把候/旬 3℃ 当成月/ONI 3℃"
+    ],
+    "standard": "GB/T 33666-2017",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "ONI / Niño3.4"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "record_claim",
+    "term": "史上最强 / 有记录以来",
+    "aliases": [
+      "史上最强",
+      "史上最大",
+      "有记录以来",
+      "破纪录",
+      "历史同期"
+    ],
+    "category": "比较",
+    "definition": "不是标准气象量；必须说明指标（风/雨/温）、空间范围、时段、数据集与起始年。",
+    "time_scale": "按变量",
+    "range": "无统一数值；需同指标、同时段、同范围、同基准比较。",
+    "equivalents": [
+      "“有记录以来”可能是 1950/1951/1981 起，取决于数据集"
+    ],
+    "misuses": [
+      "不说明指标/范围/基准",
+      "用不同口径比较",
+      "把“今年最强”写成“史上最强”"
+    ],
+    "standard": "按变量选择标准/数据集",
+    "url": "https://www.cma.gov.cn",
+    "related": [
+      "百年一遇",
+      "单日 / 24 小时"
+    ],
+    "equivalents_label": "相当于"
+  },
+  {
+    "id": "daily_window",
+    "term": "单日 / 24 小时",
+    "aliases": [
+      "单日",
+      "24小时",
+      "24 小时",
+      "日降水量",
+      "自然日"
+    ],
+    "category": "时间",
+    "definition": "“单日”可能是气象日（20—20）、自然日（00—00）或滑动 24 小时；三者排名可能不同。",
+    "time_scale": "24 小时",
+    "range": "需注明窗口：08—08、20—20、00—00、滑动 24h。",
+    "equivalents": [
+      "24h 滑动窗口不等于气象日"
+    ],
+    "misuses": [
+      "不说明窗口",
+      "把过程累计当 24h",
+      "把自然日当滑动 24h"
+    ],
+    "standard": "GB/T 35227-2017；地面气象观测规范",
+    "url": "https://www.cma.gov.cn",
+    "related": [
+      "特大暴雨"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "heavy_rain",
+    "term": "暴雨",
+    "aliases": [
+      "暴雨",
+      "暴雨量级"
+    ],
+    "category": "降水",
+    "definition": "24 小时降水量 50–99.9 mm；12 小时口径为 30–69.9 mm。",
+    "time_scale": "24 小时 / 12 小时",
+    "range": "24h 50–99.9 mm；12h 30–69.9 mm。",
+    "equivalents": [
+      "大雨：25.0–49.9mm，暴雨：50–99.9 mm，排水不畅地方容易积水内涝"
+    ],
+    "misuses": [
+      "把 1 小时雨量套 24 小时等级",
+      "把“大雨”叫“暴雨”"
+    ],
+    "standard": "GB/T 28592-2012《降水量等级》",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=B4A00E4ABCF80F8C6A048C1D0121A97D",
+    "related": [
+      "大暴雨",
+      "特大暴雨"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "heavy_rain_2",
+    "term": "大暴雨",
+    "aliases": [
+      "大暴雨",
+      "大暴雨量级"
+    ],
+    "category": "降水",
+    "definition": "24 小时降水量 100–249.9 mm；12 小时口径为 70–139.9 mm。",
+    "time_scale": "24 小时 / 12 小时",
+    "range": "24h 100–249.9 mm；12h 70–139.9 mm。",
+    "equivalents": [
+      "24h 100 mm 降水量 = 100 L/m²，大范围强降水，山洪、有城市涝灾风险"
+    ],
+    "misuses": [
+      "与特大暴雨混用",
+      "用 1 小时雨量套 24 小时等级"
+    ],
+    "standard": "GB/T 28592-2012《降水量等级》",
+    "url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=B4A00E4ABCF80F8C6A048C1D0121A97D",
+    "related": [
+      "暴雨",
+      "特大暴雨"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "heatwave",
+    "term": "高温热浪",
+    "aliases": [
+      "高温热浪",
+      "热浪",
+      "高温"
+    ],
+    "category": "温度",
+    "definition": "通常指日最高气温 ≥35℃ 且持续一定日数；具体阈值与持续日数以 GB/T 29457-2012 及地方标准为准。",
+    "time_scale": "日 / 过程",
+    "range": "常用：日最高 ≥35℃，持续 ≥3 天；强/特强等级按标准。",
+    "equivalents": [
+      "35℃ 是高温线；37℃/40℃ 常被媒体称为“强高温/极端高温”"
+    ],
+    "misuses": [
+      "把单日 35℃ 叫“热浪”",
+      "用体感温度代替气温",
+      "不说明持续日数"
+    ],
+    "standard": "GB/T 29457-2012《高温热浪等级》",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "极端高温"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "cold_wave",
+    "term": "寒潮",
+    "aliases": [
+      "寒潮",
+      "寒潮级别",
+      "断崖式降温"
+    ],
+    "category": "温度",
+    "definition": "按 GB/T 21987-2017，寒潮通常看 48 小时降温幅度与最低气温，并分等级；不同地区/季节阈值可能不同。",
+    "time_scale": "48 小时 / 过程",
+    "range": "常用：48h 降温 ≥8℃，最低气温降至 ≤4℃（以标准/地方规定为准）。",
+    "equivalents": [
+      "“断崖式降温”是描述，不是标准等级"
+    ],
+    "misuses": [
+      "把“极寒”当寒潮",
+      "只看降温幅度不看最低温",
+      "用单站代表全省"
+    ],
+    "standard": "GB/T 21987-2017《寒潮等级》",
+    "url": "https://openstd.samr.gov.cn",
+    "related": [
+      "极寒",
+      "低温"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "storm_surge",
+    "term": "风暴潮",
+    "aliases": [
+      "风暴潮",
+      "增水",
+      "海水倒灌"
+    ],
+    "category": "海洋",
+    "definition": "风暴潮增水是实测水位减天文潮；总水位是基准面以上的实际水位。二者不是同一个量。",
+    "time_scale": "小时 / 过程",
+    "range": "需说明增水/总水位、基准面、站点、天文潮。",
+    "equivalents": [
+      "增水 1 m ≠ 总水位 1 m"
+    ],
+    "misuses": [
+      "把增水当总水位",
+      "不同基准面直接比较",
+      "用单站代表整个海岸"
+    ],
+    "standard": "海洋观测预报/风暴潮应急预案",
+    "url": "https://www.nmefc.cn",
+    "related": [
+      "警戒水位",
+      "有效波高"
+    ],
+    "equivalents_label": "相关知识"
+  },
+  {
+    "id": "warning_level",
+    "term": "警戒水位 / 保证水位",
+    "aliases": [
+      "警戒水位",
+      "保证水位",
+      "超警",
+      "超保",
+      "历史最高水位"
+    ],
+    "category": "水位",
+    "definition": "警戒水位是防汛警戒线；保证水位是堤防设计防御线；\n超警不等于决堤，超保也不等于一定溃堤。",
+    "time_scale": "小时 / 过程",
+    "range": "需说明站点、基准面、警戒/保证水位数值。",
+    "equivalents": [
+      "超警 = 超过警戒水位；超保 = 超过保证水位"
+    ],
+    "misuses": [
+      "把超警当决堤",
+      "不同站点/基准面直接比较",
+      "用历史最高水位代替当前风险"
+    ],
+    "standard": "水利部/地方防汛规定",
+    "url": "http://www.mwr.gov.cn",
+    "related": [
+      "风暴潮"
+    ],
+    "equivalents_label": "相关知识"
+  }
+]

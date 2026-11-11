@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local runtime cache and temporary files
+backend/cache/
+tempjson/
+.playwright-mcp/
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local research, literature, screenshots and notes
+*.pdf
+*.doc
+*.docx
+/*.png
+/*.jpg
+/*.jpeg
+/*.md
+!README.md
+
+# Editor backups and unused local assets
+web/editor-*.html
+web/data/*_editor.json
+web/README.md
+web/assets/

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="CallMeSUCH" />
+  <meta name="description" content="气象信息判别器：别再最小最大，用数据说法。把极端说法拆成时间、地点、量级和证据条件，判断在什么条件下成立。" />
+  <title>气象信息判别器 · 别再最小最大，用数据说法</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='18' fill='%230f766e'/%3E%3Cpath d='M8 23c4-6 7-9 12-9 4 0 7 2 12 8' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M10 28c4-4 6-5 10-5s6 1 10 5' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' opacity='.7'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css?v=39" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#/home" aria-label="回到首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="34" height="34" role="img">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="2.2" opacity=".45"/>
+            <path d="M8 23c4-6 7-9 12-9 4 0 7 2 12 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M10 28c4-4 6-5 10-5s6 1 10 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+            <circle cx="27" cy="12" r="2.4" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>气象信息判别器</strong>
+          <small>别再最小最大，用数据说法</small>
+        </span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#/home" data-nav="home">判别器</a>
+        <a href="#/terms" data-nav="terms">词库</a>
+        <a href="#/cases" data-nav="cases">案例</a>
+        <a href="#/sources" data-nav="sources">信源</a>
+        <a href="#/method" data-nav="method">方法</a>
+      </nav>
+      <span class="proto-badge">原型 v0.1</span>
+    </div>
+  </header>
+
+  <main id="app" class="app"></main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p><strong>“史上最强！”？ 气象说法真实吗？</strong> · 先找漏洞，再翻词典，最后查官网。</p>
+      <p class="muted">作者：<a href="https://github.com/CallMeSUCH" target="_blank" rel="noopener">CallMeSUCH</a> · 本原型不接入在线大模型；判定由规则与知识库完成。官方数据请以链接页面的最新发布为准。</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js?v=105" defer></script>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

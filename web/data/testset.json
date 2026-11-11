@@ -1,0 +1,65 @@
+[
+  {
+    "id": "t1",
+    "claim": "特大暴雨来了，1 小时下了 100 毫米。",
+    "caseId": null,
+    "expected": "C",
+    "note": "1 小时雨量不能套 24 小时“特大暴雨”"
+  },
+  {
+    "id": "t2",
+    "claim": "这次台风极大风力达到 17 级，是超强台风登陆。",
+    "caseId": null,
+    "expected": "B",
+    "note": "极大/平均、17 级/超强台风、巅峰/登陆需限定"
+  },
+  {
+    "id": "t3",
+    "claim": "这是百年一遇的暴雨。",
+    "caseId": null,
+    "expected": "B",
+    "note": "重现期是 1% 年超越概率，不是周期"
+  },
+  {
+    "id": "t4",
+    "claim": "气象台说极大风速 30 米每秒，最大风速 25 米每秒。",
+    "caseId": null,
+    "expected": "B",
+    "note": "极大风速 3 秒，最大风速 10 分钟"
+  },
+  {
+    "id": "t5",
+    "claim": "9 月海温指数突破 3℃。",
+    "caseId": null,
+    "expected": "D",
+    "note": "缺指数/区域/时间尺度/地点"
+  },
+  {
+    "id": "t6",
+    "claim": "这是史上最强台风。",
+    "caseId": null,
+    "expected": "D",
+    "note": "缺指标/范围/时段/事件"
+  },
+  {
+    "id": "t7",
+    "claim": "北京 24 小时全市平均 1959 年以来最大暴雨。",
+    "caseId": "beijing_rain",
+    "expected": "B",
+    "note": "高条件密度，需补 24h 站网序列"
+  },
+  {
+    "id": "t8",
+    "claim": "北京 24 小时降水 260 毫米，达特大暴雨。",
+    "caseId": null,
+    "expected": "B",
+    "note": "24h ≥250 mm 成立，但仍需站/来源"
+  },
+  {
+    "id": "t9",
+    "claim": "广东 2026.5.20 1000mm超级暴雨",
+    "caseId": null,
+    "expected": "C",
+    "note": "“超级暴雨”不是业务等级；1000 mm 是 250 mm 阈值的 4 倍，需站点/时段/来源"
+  }
+]

@@ -1,0 +1,188 @@
+[
+  {
+    "name": "中国气象局",
+    "url": "https://www.cma.gov.cn",
+    "level": "L1",
+    "use": "政策、业务规定、气象科普、新闻发布会"
+  },
+  {
+    "name": "中央气象台",
+    "url": "https://www.nmc.cn",
+    "level": "L1",
+    "use": "预报、预警、天气实况"
+  },
+  {
+    "name": "中央气象台台风网",
+    "url": "https://typhoon.nmc.cn",
+    "level": "L1",
+    "use": "台风路径、强度、登陆信息"
+  },
+  {
+    "name": "国家气候中心",
+    "url": "https://www.ncc-cma.net",
+    "level": "L1",
+    "use": "气候监测、ENSO、季节预测"
+  },
+  {
+    "name": "中国气象数据网",
+    "url": "https://data.cma.cn",
+    "level": "L1",
+    "use": "地面、探空、雷达等观测数据"
+  },
+  {
+    "name": "CMA 热带气旋资料中心",
+    "url": "https://tcdata.typhoon.org.cn",
+    "level": "L1",
+    "use": "热带气旋最佳路径数据集"
+  },
+  {
+    "name": "国家卫星气象中心",
+    "url": "https://www.nsmc.org.cn",
+    "level": "L1",
+    "use": "风云卫星云图与产品"
+  },
+  {
+    "name": "国家标准全文公开系统",
+    "url": "https://openstd.samr.gov.cn",
+    "level": "L1",
+    "use": "GB/T 标准原文与状态"
+  },
+  {
+    "name": "全国标准信息公共服务平台",
+    "url": "https://std.samr.gov.cn",
+    "level": "L1",
+    "use": "标准状态、替代关系"
+  },
+  {
+    "name": "国家法律法规数据库",
+    "url": "https://flk.npc.gov.cn",
+    "level": "L1",
+    "use": "法律、行政法规"
+  },
+  {
+    "name": "自然资源部",
+    "url": "https://www.mnr.gov.cn",
+    "level": "L1",
+    "use": "海洋预警、海洋观测"
+  },
+  {
+    "name": "国家海洋环境预报中心",
+    "url": "https://www.nmefc.cn",
+    "level": "L1",
+    "use": "海浪、风暴潮、海温"
+  },
+  {
+    "name": "水利部",
+    "url": "http://www.mwr.gov.cn",
+    "level": "L1",
+    "use": "水情、旱情、洪水"
+  },
+  {
+    "name": "应急管理部",
+    "url": "https://www.mem.gov.cn",
+    "level": "L1",
+    "use": "灾害通报、应急预案"
+  },
+  {
+    "name": "生态环境部",
+    "url": "https://www.mee.gov.cn",
+    "level": "L1",
+    "use": "空气质量"
+  },
+  {
+    "name": "中国互联网联合辟谣平台",
+    "url": "https://www.piyao.org.cn",
+    "level": "L1",
+    "use": "已辟谣案例"
+  },
+  {
+    "name": "NOAA CPC",
+    "url": "https://cpc.ncep.noaa.gov",
+    "level": "L2",
+    "use": "ONI、ENSO 监测与预测"
+  },
+  {
+    "name": "NOAA NCEI / IBTrACS",
+    "url": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+    "level": "L2",
+    "use": "全球热带气旋最佳路径"
+  },
+  {
+    "name": "JMA",
+    "url": "https://www.jma.go.jp",
+    "level": "L2",
+    "use": "西北太平洋最佳路径、卫星"
+  },
+  {
+    "name": "JTWC",
+    "url": "https://www.metoc.navy.mil/jtwc",
+    "level": "L2",
+    "use": "热带气旋警报"
+  },
+  {
+    "name": "ECMWF",
+    "url": "https://www.ecmwf.int",
+    "level": "L2",
+    "use": "模式预报、再分析"
+  },
+  {
+    "name": "Copernicus CDS",
+    "url": "https://cds.climate.copernicus.eu",
+    "level": "L2",
+    "use": "ERA5 再分析"
+  },
+  {
+    "name": "中国天气网",
+    "url": "https://www.weather.com.cn",
+    "level": "L2",
+    "use": "公众预报与科普"
+  },
+  {
+    "name": "中国知网",
+    "url": "https://www.cnki.net",
+    "level": "L3",
+    "use": "学术文献（仅用于方法，不用于事实判定）"
+  },
+  {
+    "name": "镜像地球（主站）",
+    "url": "https://mirror-earth.com/",
+    "level": "L5",
+    "use": "商业气象数据平台：历史约 80 年、未来约 15 天；非官方观测，只作辅助"
+  },
+  {
+    "name": "镜像地球气象地图",
+    "url": "https://mirror-earth.com/meteo_maps/",
+    "level": "L5",
+    "use": "温度、降水、风场、雷达、卫星图层可视化；不作为事实判据"
+  },
+  {
+    "name": "datashareclub 历史天气",
+    "url": "https://datashareclub.com/",
+    "level": "L5",
+    "use": "3200+ 城市近年逐小时温度、降水、风等；来源和精度未公开，只作过程辅助"
+  },
+  {
+    "name": "国家地球系统科学数据中心",
+    "url": "https://www.geodata.cn/",
+    "level": "L6",
+    "use": "科研数据汇交与共享；降水/气温等数据集，需注册、申请或加入数据订单"
+  },
+  {
+    "name": "1901—2025 年中国 1km 逐月降水量",
+    "url": "https://www.geodata.cn/data/datadetails.html?dataguid=192891852410344&docId=142",
+    "level": "L6",
+    "use": "月尺度格点降水；可作长期季节背景，不能替代日/24h 观测"
+  },
+  {
+    "name": "中国 0.25° 日最大降雨量（1948—2016）",
+    "url": "https://www.geodata.cn/main/face_science_detail?guid=85212273043910",
+    "level": "L6",
+    "use": "日最大降雨格点；止于 2016，不能覆盖近年事件"
+  },
+  {
+    "name": "1724—2012 年北京地区雨季及各月降水量",
+    "url": "https://www.geodata.cn/main/face_science_detail?guid=113666702673980&publisherGuid=126744287495912",
+    "level": "L6",
+    "use": "北京雨季/月降水历史背景；止于 2012，不是日值"
+  }
+]

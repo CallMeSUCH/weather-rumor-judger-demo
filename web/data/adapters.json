@@ -1,0 +1,211 @@
+[
+  {
+    "id": "cpc_oni",
+    "name": "ONI / Niño3.4",
+    "provider": "NOAA CPC",
+    "type": "实时",
+    "official_url": "https://cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+    "page_url": "https://cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+    "app_endpoint": "/api/evidence/oni",
+    "data": "Niño3.4 三个月滑动平均、分类、历史最高、指定日期对应季节",
+    "note": "ERSSTv5、1991—2020 基准；与中国 NCC 的 Niño3.4 不可直接等同。"
+  },
+  {
+    "id": "nmc_weather",
+    "name": "城市实况 + 7 天预报 + 城市预警",
+    "provider": "中央气象台 nmc.cn",
+    "type": "实时",
+    "official_url": "https://www.nmc.cn/rest/weather?stationid=Wqsps",
+    "page_url": "https://www.nmc.cn/publish/forecast/ABJ/beijing.html",
+    "app_endpoint": "/api/evidence/nmc/weather?city=北京",
+    "data": "实况温度/湿度/降雨/风、7 天预报、当前城市预警",
+    "note": "按城市码查询；省级名称默认取省会代表点，不代表全省平均。"
+  },
+  {
+    "id": "nmc_alarms",
+    "name": "灾害预警列表",
+    "provider": "中央气象台 nmc.cn",
+    "type": "实时",
+    "official_url": "https://www.nmc.cn/rest/findAlarm?pageNo=1&pageSize=30",
+    "page_url": "https://www.nmc.cn/publish/alarm.html",
+    "app_endpoint": "/api/evidence/nmc/alarms?province=北京&pages=2",
+    "data": "全国预警列表；按标题过滤省/市",
+    "note": "带 province 参数的官方接口会返回内部异常，当前改为拉全国列表后按标题过滤。"
+  },
+  {
+    "id": "nmc_rank1h",
+    "name": "1 小时实况排行",
+    "provider": "中央气象台 nmc.cn",
+    "type": "实时",
+    "official_url": "https://www.nmc.cn/product/realrank/1hour/list.json",
+    "page_url": "https://www.nmc.cn/",
+    "app_endpoint": "/api/evidence/nmc/rank1h",
+    "data": "2418 个国家级站 1 小时降水、最高温、最低温、最大风 Top10",
+    "note": "只代表当前时次，不是历史排行。"
+  },
+  {
+    "id": "cma_typhoon",
+    "name": "台风列表 / 轨迹 / 强度 / 预报",
+    "provider": "中央气象台台风网 typhoon.nmc.cn",
+    "type": "实时",
+    "official_url": "https://typhoon.nmc.cn/weatherservice/typhoon/jsons/list_default",
+    "page_url": "https://typhoon.nmc.cn/",
+    "app_endpoint": "/api/evidence/cma/latest",
+    "data": "当前年度台风列表、1949 至今年度列表、轨迹点、中心气压/风速、BABJ 预报、台风快讯",
+    "note": "CMA 台风业务强度通常为 2 分钟平均；17 级风力等级为 10 分钟平均，不能直接等同。历史台风用 list_{year}。"
+  },
+  {
+    "id": "open_meteo",
+    "name": "点预报 / 历史再分析 / 地理编码",
+    "provider": "Open-Meteo",
+    "type": "开放接口",
+    "official_url": "https://api.open-meteo.com/v1/forecast",
+    "page_url": "https://open-meteo.com/",
+    "app_endpoint": "/api/evidence/weather?lat=39.9&lon=116.4&days=7",
+    "data": "降水、最高/最低温、风速；历史区间；地点经纬度",
+    "note": "开放接口，不是中国官方站点观测；只作辅助核验。"
+  },
+  {
+    "id": "cma_best_track",
+    "name": "历史台风最佳路径",
+    "provider": "CMA 热带气旋资料中心",
+    "type": "待接",
+    "official_url": "https://tcdata.typhoon.org.cn",
+    "page_url": "https://tcdata.typhoon.org.cn",
+    "app_endpoint": "",
+    "data": "1949 年至今历史台风最佳路径",
+    "note": "NMC 年度列表已支持历史查询；tcdata 最佳路径 CSV 仍待预下载，不能直接爬。"
+  },
+  {
+    "id": "cma_station",
+    "name": "地面/探空/雷达站点观测",
+    "provider": "中国气象数据网",
+    "type": "需登录",
+    "official_url": "https://data.cma.cn",
+    "page_url": "https://data.cma.cn",
+    "app_endpoint": "/api/evidence/cma/station/status",
+    "data": "国家级/区域站观测、探空、雷达等（CIMISS 接口）",
+    "note": "需实名注册 + API 下单获取 userId/pwd；每类资料一次免费 7 天试用；部分“免费”、部分“定制/收费”，以订单金额为准。"
+  },
+  {
+    "id": "ogimet_synop",
+    "name": "站点 SYNOP 实况（CMA 站点平替）",
+    "provider": "Ogimet / WMO GTS",
+    "type": "开放接口",
+    "official_url": "https://www.ogimet.com/cgi-bin/getsynop",
+    "page_url": "https://www.ogimet.com/synops.phtml.en",
+    "app_endpoint": "/api/evidence/ogimet/synop?station=54511&start=2025-10-08&end=2025-10-09",
+    "data": "按 WMO 站号查 SYNOP 报文，解析温度、露点、气压、风、降水；保留原始报文",
+    "note": "免费、无需账号；按 WMO block 取回报文后本地过滤站点；是 WMO/GTS 报文，不是 CMA 官方站点档案；部分日期/站点缺报。"
+  },
+  {
+    "id": "nasa_power",
+    "name": "日降水 / 气温（独立交叉核验）",
+    "provider": "NASA POWER",
+    "type": "开放接口",
+    "official_url": "https://power.larc.nasa.gov/api/temporal/daily/point",
+    "page_url": "https://power.larc.nasa.gov/data-access-viewer/",
+    "app_endpoint": "/api/evidence/nasa/power?lat=23.1291&lon=113.2644&start=2026-05-20&end=2026-05-20",
+    "data": "逐日降水、平均温、最高/最低温、风速、湿度",
+    "note": "卫星/再分析日值，不是中国官方站点观测；与 Open-Meteo 交叉看量级，不能替代 CMA。"
+  },
+  {
+    "id": "meteostat_hourly",
+    "name": "站点逐时观测（CMA 平替，第三方）",
+    "provider": "Meteostat",
+    "type": "第三方",
+    "official_url": "https://bulk.meteostat.net/v2/hourly/54511.csv.gz",
+    "page_url": "https://dev.meteostat.net/bulk/hourly.html",
+    "app_endpoint": "/api/evidence/meteostat/hourly?station=54511&date=2025-10-08",
+    "data": "逐时气温、露点、湿度、降水、风向风速、气压；按 WMO 站号 + 北京日期",
+    "note": "第三方整编，不是 CMA 原始观测；54511 绑定 ZBAA 首都机场，与 CMA 54511 观象台坐标/含义不同；批量数据通常滞后 1–2 个月。"
+  },
+  {
+    "id": "china_weather_daily",
+    "name": "城市日值（最近观测）",
+    "provider": "中国天气网",
+    "type": "实时",
+    "official_url": "http://d1.weather.com.cn/calendar_new/2026/101010100_202610.html",
+    "page_url": "http://www.weather.com.cn/",
+    "app_endpoint": "/api/evidence/china-weather/daily?city=北京&date=2026-10-17",
+    "data": "城市日降水 rainobs、最高/最低温 maxobs/minobs；最近日期有 obs",
+    "note": "官方媒体城市日值，不是 CMA 原始站点档案；较早月份可能只有历史均值，不能代表全市平均。"
+  },
+  {
+    "id": "china_weather_window",
+    "name": "事件前后过程窗口",
+    "provider": "中国天气网",
+    "type": "实时",
+    "official_url": "http://d1.weather.com.cn/calendar_new/2026/101010100_202610.html",
+    "page_url": "http://www.weather.com.cn/",
+    "app_endpoint": "/api/evidence/china-weather/window?city=北京&date=2026-10-17&before=2&after=1",
+    "data": "事件日前后逐日降水、最高/最低温；用于 2025—2026 过程窗口辅助",
+    "note": "官方媒体城市日值，不是 CMA 原始站点档案；只有最近日期有逐日 obs，不能代表全市平均。"
+  },
+  {
+    "id": "datashareclub_window",
+    "name": "近30天过程窗口（第三方辅助）",
+    "provider": "datashareclub.com",
+    "type": "第三方",
+    "official_url": "https://datashareclub.com/location/101010100/weatherd.html",
+    "page_url": "https://datashareclub.com/",
+    "app_endpoint": "/api/evidence/datashareclub/window?city=北京&date=2026-10-17&before=2&after=1",
+    "data": "当前近30天城市日降水、最高/最低温；用于补中国天气网缺失的过程日",
+    "note": "第三方聚合，上游来源和精度未公开；服务条款明确不保证准确性，不具备法定证据效力，只作辅助。"
+  },
+  {
+    "id": "noaa_gsod",
+    "name": "北京站点逐日日值（CMA 回退）",
+    "provider": "NOAA NCEI GSOD",
+    "type": "开放接口",
+    "official_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/archive/",
+    "page_url": "https://www.ncei.noaa.gov/access/search/data-search/global-summary-of-the-day",
+    "app_endpoint": "/api/evidence/gsod/daily?station=54511&start=2020-01-01&end=2026-12-31",
+    "data": "按 WMO 站号查逐日降水、气温、露点、气压、风速、能见度；1959—2024 可作历史回退",
+    "note": "WMO/GTS 日汇总，按 GMT；不是 CMA 官方站点档案；54511 可能对应机场站，不能代表北京全市平均；2025 年档案可能不完整，2026 年暂无。"
+  },
+  {
+    "id": "ncc_enso",
+    "name": "ENSO 监测与季节预测",
+    "provider": "国家气候中心",
+    "type": "官方入口",
+    "official_url": "https://www.ncc-cma.net",
+    "page_url": "https://www.ncc-cma.net",
+    "app_endpoint": "/api/evidence/ncc/enso",
+    "data": "ENSO 监测页（需登录）；公开新闻中的 ENSO 动态",
+    "note": "cmdp 监测页需登录，不抓取；当前数值用官方发布/新闻稿引用，并与 CPC ONI 对照。"
+  },
+  {
+    "id": "nmefc",
+    "name": "海浪 / 风暴潮 / 海冰 / 海啸警报",
+    "provider": "国家海洋环境预报中心",
+    "type": "实时",
+    "official_url": "https://www.nmefc.cn/api/data/warning",
+    "page_url": "https://www.nmefc.cn",
+    "app_endpoint": "/api/evidence/nmefc/warnings?type=wave",
+    "data": "官方海洋警报；支持按类型/年份查历史警报",
+    "note": "预报场地图服务未接；先接官方警报/历史警报；历史年份以接口返回为准。"
+  },
+  {
+    "id": "standards",
+    "name": "GB/T 术语与阈值",
+    "provider": "国家标准全文公开系统",
+    "type": "离线知识库",
+    "official_url": "https://openstd.samr.gov.cn",
+    "page_url": "https://openstd.samr.gov.cn",
+    "app_endpoint": "/api/terms",
+    "data": "极大/最大风速、风力等级、台风等级、降水量等级、ONI 判据等",
+    "note": "已预抽取成 data/terms.json；正式版需记录标准版本/生效日期。"
+  },
+  {
+    "id": "piyao",
+    "name": "已辟谣案例检索",
+    "provider": "中国互联网联合辟谣平台",
+    "type": "实时",
+    "official_url": "https://so.news.cn/xhtvapp/rumourSearch?title=台风&pageNum=1&pageSize=10&sort=-2",
+    "page_url": "https://www.piyao.org.cn/pysjk/frontsql.htm",
+    "app_endpoint": "/api/evidence/piyao/search?q=台风",
+    "data": "按标题检索已辟谣案例（标题/时间/摘要/原文链接）",
+    "note": "标题检索，并只保留发布时间不早于事件日的案例；只作背景/案例参考，不作为事实判据。"
+  }
+]
