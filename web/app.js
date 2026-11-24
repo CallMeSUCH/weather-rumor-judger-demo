@@ -1305,9 +1305,30 @@
       A: '成立', B: '条件成立', C: '术语/逻辑不成立', D: '信息不足', E: '与事实不符'
     }[r.verdict] || '待判';
 
+    // 槽位状态：值里出现“未…”判缺失；关键口径字段判待核；其余视为已给
+    const slotState = (k, v) => {
+      const s = String(v || '');
+      if (/未说明|未给出|未提供|未定义|不明|未列出/.test(s)) return ['missing', '缺失'];
+      if (/基准|限定|来源|级别|时间|窗口/.test(k)) return ['check', '待核'];
+      return ['given', '已给'];
+    };
+
     return `
-      <div class="result-wrap">
-        <div class="result-header">
+      <div class="result-wrap doc-mode">
+        <aside class="doc-toc" aria-label="本页目录">
+          <div class="doc-toc-label">本页</div>
+          <a href="#sec-verdict">判定</a>
+          <a href="#sec-sentence">句子拆解</a>
+          <a href="#sec-logic">逻辑漏洞</a>
+          <a href="#sec-evidence">官方证据</a>
+          <a href="#sec-terms">术语判据</a>
+          <a href="#sec-cond">成立条件</a>
+          <a href="#sec-next">还需补什么</a>
+          <a href="#live-panel">实时核验</a>
+          <a href="#summary-panel">总结</a>
+        </aside>
+        <div class="doc-body">
+        <div class="result-header" id="sec-verdict">
           <div class="verdict-letter ${escapeHTML(r.verdict)}">${escapeHTML(r.verdict)}</div>
           <div>
             <h2>${escapeHTML(r.title)}</h2>
@@ -1329,21 +1350,29 @@
           如果要按 2026 年重新分析，请从首页手动输入同一句话并修改事件时间。
         </div>` : ''}
 
+        ${renderDataOverview(r)}
+
         <div class="result-grid">
           <div class="result-col">
-            <div class="panel sentence-panel" data-role="sentence-panel">
+            <div class="panel sentence-panel" id="sec-sentence" data-role="sentence-panel">
               <div class="card-head">
                 <h3>句子拆解</h3>
-                <span class="small">${(r.decomposition || []).length} 个槽位</span>
+                <span class="small">${(r.decomposition || []).length} 个槽位 · 标出缺失项</span>
               </div>
-              <div class="kv-scroll">
-                <dl class="kv">
-                  ${(r.decomposition || []).map(([k, v]) => `<dt>${escapeHTML(k)}</dt><dd>${escapeHTML(v || '未说明')}</dd>`).join('')}
-                </dl>
-              </div>
+              <table class="doc-table">
+                <thead>
+                  <tr><th>槽位</th><th>取值</th><th>状态</th></tr>
+                </thead>
+                <tbody>
+                  ${(r.decomposition || []).map(([k, v]) => {
+                    const [cls, label] = slotState(k, v);
+                    return `<tr><td>${escapeHTML(k)}</td><td>${escapeHTML(v || '未说明')}</td><td><span class="st-pill ${cls}">${label}</span></td></tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
             </div>
 
-            <div class="panel logic-panel" data-role="logic-panel">
+            <div class="panel logic-panel" id="sec-logic" data-role="logic-panel">
               <div class="card-head">
                 <h3>逻辑漏洞</h3>
                 <span class="small">先找漏洞，再看数据</span>
@@ -1353,7 +1382,7 @@
               </div>
             </div>
 
-            <div class="panel evidence-panel" data-role="official-evidence">
+            <div class="panel evidence-panel" id="sec-evidence" data-role="official-evidence">
               <div class="card-head">
                 <h3>官方证据 / 核验入口</h3>
                 <span class="small">${urls.length} 条链接</span>
@@ -1369,25 +1398,24 @@
                       <p>${escapeHTML(e.data || '')}</p>
                       <a href="${escapeHTML(e.url)}" target="_blank" rel="noopener">${escapeHTML(e.url)}</a>
                     </div>`).join('')}
-                </div>` : `
+                </div>              ` : `
                 <div class="notice warn">官方入口未列出；请到信源页查询。</div>`}
-              ${urls.length ? `<p class="small muted" style="margin-top:8px"><b>官方核验链接</b>🔗</p>` : ''}
             </div>
           </div>
 
           <div class="result-col">
-            <div class="panel term-panel" data-role="term-panel">
+            <div class="panel term-panel" id="sec-terms" data-role="term-panel">
               <div class="card-head">
                 <h3>模糊词判据卡</h3>
                 <span class="small">${(r.terms || []).length} 张</span>
               </div>
               <div class="term-scroll">
-                ${(r.terms || []).length ? (r.terms || []).map(renderTermCard).join('') : `
+                ${(r.terms || []).length ? (r.terms || []).map((t, i) => renderTermCard(t, { collapsible: true, open: i === 0 })).join('') : `
                   <div class="notice info">未匹配到标准术语。可以到 <a href="#/terms">词库</a> 搜索“极大 / 最大 / 特大暴雨 / 百年一遇”。</div>`}
               </div>
             </div>
 
-            <div class="panel" data-role="conditions-panel">
+            <div class="panel" id="sec-cond" data-role="conditions-panel">
               <div class="card-head">
                 <h3>成立条件</h3>
                 <span class="small">如果……则……</span>
@@ -1398,7 +1426,7 @@
               <p class="verdict-note">“真/假”不足以定性，分析“在什么口径下才能成立”</p>
             </div>
 
-            <div class="panel" data-role="next-steps">
+            <div class="panel" id="sec-next" data-role="next-steps">
               <div class="card-head">
                 <h3>还要补什么</h3>
                 <span class="small">缺失信息清单</span>
@@ -1410,7 +1438,6 @@
           </div>
         </div>
 
-        ${renderDataOverview(r)}
         ${renderLivePanel(r)}
         ${renderSummary(r)}
 
@@ -1425,6 +1452,7 @@
             </ol>` : `
             <div class="notice info">暂无官方链接；请到 <a href="#/sources">信源库</a> 查询，或使用上方“实时核验”。</div>`}
           <p class="verdict-note">数据以官方页面最新发布为准；本报告保留访问日期，便于复核。</p>
+        </div>
         </div>
       </div>`;
   }
@@ -1441,11 +1469,10 @@
       </div>`;
   }
 
-  function renderTermCard(t) {
+  function renderTermCard(t, opts = {}) {
     const show = (value) => escapeHTML(value || '').replace(/\n/g, '<br>');
     const eqLabel = t.equivalents_label || '相当于';
-    return `
-      <article class="term-card" data-edit-id="term-${escapeHTML(t.id)}">
+    const body = `
         <div class="term-head">
           <h4>${escapeHTML(t.term)}</h4>
           <span class="tag">${escapeHTML(t.category)}</span>
@@ -1458,7 +1485,23 @@
         <div class="term-meta">
           <span><b>依据：</b>${show(t.standard)}</span>
           ${t.url ? `<span><a href="${escapeHTML(t.url)}" target="_blank" rel="noopener">查标准/来源 →</a></span>` : ''}
-        </div>
+        </div>`;
+
+    // 结果页：可折叠，默认只展开第一张，避免页面过长
+    if (opts.collapsible) {
+      return `
+      <details class="term-fold" data-edit-id="term-${escapeHTML(t.id)}"${opts.open ? ' open' : ''}>
+        <summary>
+          <span class="term-fold-name">${escapeHTML(t.term)}</span>
+          <span class="tag">${escapeHTML(t.category)}</span>
+        </summary>
+        <div class="term-fold-body">${body}</div>
+      </details>`;
+    }
+
+    return `
+      <article class="term-card" data-edit-id="term-${escapeHTML(t.id)}">
+        ${body}
       </article>`;
   }
 
@@ -1470,6 +1513,12 @@
     ];
     const all = pairs.flat();
     const get = (role) => document.querySelector(`[data-role="${role}"]`);
+
+    // 单列文档流不做左右等高配对，清掉残留行内高度即可
+    if (document.querySelector('.result-wrap.doc-mode')) {
+      all.forEach(role => { const el = get(role); if (el) el.style.height = ''; });
+      return;
+    }
 
     if (window.innerWidth <= 980) {
       all.forEach(role => { const el = get(role); if (el) el.style.height = ''; });
@@ -1605,20 +1654,12 @@
     const quick = QUICK_FACT_SETS.find(set => set.test(claim));
     if (quick) {
       return `
-        <div class="panel data-overview" id="data-overview" style="margin-top:14px">
-          <div class="card-head">
-            <h3>数据速览</h3>
-            <span class="small">${escapeHTML(quick.date)}</span>
-          </div>
-          <div class="overview-strip">
-            ${quick.items.map(item => `
-              <div class="overview-item">
-                <span class="overview-label">${escapeHTML(item.label)}</span>
-                <strong class="overview-value key-value" title="${escapeHTML(item.value)}">${escapeHTML(item.value)}</strong>
-                <span class="overview-sub" title="${escapeHTML(item.sub)}">${escapeHTML(item.sub)}</span>
-              </div>`).join('')}
-          </div>
-          <p class="small muted" style="margin:8px 0 0">来源：${escapeHTML(quick.source)}；仅展示核心实况数据。</p>
+        <div class="doc-inline" id="data-overview">
+          <span class="doc-inline-label">数据速览</span>
+          ${quick.items.map(item => `
+            <span class="doc-inline-value">${escapeHTML(item.label)} ${escapeHTML(item.value)}</span>
+            <span class="doc-inline-sub">${escapeHTML(item.sub)}</span>`).join('')}
+          <span class="doc-inline-src">来源：${escapeHTML(quick.source)}（${escapeHTML(quick.date)}）；仅展示核心实况数据。</span>
         </div>`;
     }
 
@@ -1633,18 +1674,10 @@
     const valueText = values.length ? values.join(' / ') : '未给出';
     const subText = values.length ? '' : '需要具体数值才能核验';
     return `
-      <div class="panel data-overview" id="data-overview" style="margin-top:14px">
-        <div class="card-head">
-          <h3>数据速览</h3>
-          <span class="small">关键数据</span>
-        </div>
-        <div class="overview-strip">
-          <div class="overview-item">
-            <span class="overview-label">${label}</span>
-            <strong class="overview-value key-value" title="${escapeHTML(valueText)}">${escapeHTML(valueText)}</strong>
-            ${subText ? `<span class="overview-sub">${escapeHTML(subText)}</span>` : ''}
-          </div>
-        </div>
+      <div class="doc-inline" id="data-overview">
+        <span class="doc-inline-label">数据速览</span>
+        <span class="doc-inline-value">${escapeHTML(label)}：${escapeHTML(valueText)}</span>
+        ${subText ? `<span class="doc-inline-sub">${escapeHTML(subText)}</span>` : ''}
       </div>`;
   }
 
@@ -2894,6 +2927,7 @@
   }
 
   function buildReportHTML(r) {
+    const vColor = { A: '#00703c', B: '#b45f06', C: '#d4351c', D: '#505a5f', E: '#912b88' }[r.verdict] || '#0b0c0c';
     const rows = (r.decomposition || []).map(([k, v]) => `<tr><th>${escapeHTML(k)}</th><td>${escapeHTML(v || '未说明')}</td></tr>`).join('');
     const checks = (r.loopholes || []).map(c => `<li><b>[${escapeHTML(c.status)}] ${escapeHTML(c.name)}</b>：${escapeHTML(c.note || '')}</li>`).join('');
     const terms = (r.terms || []).map(t => `<div class="term"><h4>${escapeHTML(t.term)}</h4><p>${escapeHTML(t.definition)}</p><p><b>时间尺度：</b>${escapeHTML(t.time_scale)}；<b>数值：</b>${escapeHTML(t.range)}</p><p><b>依据：</b>${escapeHTML(t.standard)}</p></div>`).join('');
@@ -2904,12 +2938,18 @@
 
     return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>判据报告 · ${escapeHTML(r.title)}</title>
       <style>
-        body{font-family:"Microsoft YaHei",system-ui,sans-serif;line-height:1.75;color:#0d1b2a;max-width:820px;margin:36px auto;padding:0 24px}
-        h1{font-size:24px;margin:0 0 6px}h2{font-size:17px;margin:24px 0 8px;border-left:3px solid #0f766e;padding-left:9px}
-        .meta{color:#62748a;font-size:13px}.verdict{display:inline-block;padding:5px 12px;border-radius:8px;background:#fdf3e2;color:#b45309;font-weight:700}
-        table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #eaf0f6;text-align:left;padding:6px 8px;vertical-align:top}
-        th{width:88px;color:#62748a;font-weight:600}ul{padding-left:18px;font-size:13px}.term{border:1px solid #eaf0f6;border-radius:8px;padding:10px 12px;margin:8px 0}
-        a{color:#0f766e;word-break:break-all}.note{color:#62748a;font-size:12px;border-top:1px dashed #dbe4ee;margin-top:20px;padding-top:10px}
+        body{font-family:"Segoe UI",system-ui,"Microsoft YaHei UI","Microsoft YaHei",sans-serif;line-height:1.65;color:#0b0c0c;max-width:820px;margin:32px auto;padding:0 24px;font-size:15px}
+        h1{font-size:24px;margin:0 0 4px;font-weight:700}
+        h2{font-size:19px;margin:28px 0 8px;padding-top:8px;border-top:2px solid #0b0c0c;font-weight:700}
+        .meta{color:#6f777b;font-size:13px}
+        .verdict{display:inline-block;padding:4px 12px;background:${vColor};color:#fff;font-weight:700;font-size:14px}
+        table{width:100%;border-collapse:collapse;font-size:14px}
+        th,td{border-bottom:1px solid #d8dde0;text-align:left;padding:8px 10px 8px 0;vertical-align:top}
+        th{width:92px;color:#6f777b;font-weight:700}
+        ul{padding-left:18px;font-size:14px}
+        .term{border:none;border-top:1px solid #d8dde0;padding:10px 0}
+        a{color:#1d70b8;word-break:break-all}
+        .note{color:#6f777b;font-size:12px;border-top:1px solid #b1b4b6;margin-top:20px;padding-top:10px}
       </style></head><body>
       <h1>气象信息判别器 · 判据报告</h1>
       <p class="meta">作者：CallMeSUCH · 生成时间：${nowStamp()}</p>

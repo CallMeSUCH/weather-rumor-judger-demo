@@ -462,6 +462,39 @@ a:focus-visible {
 }
 .result-wrap .term-card + .term-card { margin-top: var(--sp-4); }
 
+/* 结果页判据卡：折叠式，默认只展开第一张 */
+.term-fold {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+.term-fold:first-of-type { border-top: none; padding-top: 4px; }
+.term-fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  padding: 4px 0;
+}
+.term-fold > summary::-webkit-details-marker { display: none; }
+.term-fold > summary::before {
+  content: "＋";
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+.term-fold[open] > summary::before { content: "－"; }
+.term-fold-name {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--ink);
+}
+.term-fold > summary .tag { margin-left: auto; }
+.term-fold-body { padding-top: var(--sp-3); padding-left: 24px; }
+.term-fold-body .term-head { display: none; }
+.term-fold-body .term-meta { margin-top: var(--sp-3); }
+
 /* 总结区的四个小块同样去容器化 */
 .summary-item {
   border: none;
@@ -646,6 +679,182 @@ a:focus-visible {
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8pt; color: #555; }
 }
 
+/* ============================================================
+   结果页 · 目录 + 单列文档流
+   取代原来的六面板双列瀑布
+   ============================================================ */
+.result-wrap.doc-mode {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+  margin-top: var(--sp-5);
+}
+
+.doc-toc {
+  position: sticky;
+  top: 74px;
+  font-size: 13px;
+  border-left: 2px solid var(--line);
+  padding-left: var(--sp-3);
+}
+.doc-toc-label {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: var(--sp-2);
+}
+.doc-toc a {
+  display: block;
+  padding: 6px 0;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-2);
+  line-height: 1.4;
+}
+.doc-toc a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.doc-body { min-width: 0; }
+
+/* 取消两栏与等高配对，改为连续区块 */
+.doc-mode .result-grid {
+  display: block;
+  border: none;
+  background: none;
+  gap: 0;
+  margin: 0;
+}
+.doc-mode .result-grid .result-col { display: block; }
+.doc-mode .result-grid [data-role] {
+  grid-column: auto;
+  grid-row: auto;
+  border: none;
+  border-top: 1px solid var(--line);
+  padding: var(--sp-5) 0;
+  background: transparent;
+  height: auto !important;
+}
+.doc-mode .result-grid [data-role] .card-head {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: var(--sp-3);
+  align-items: baseline;
+}
+.doc-mode .result-grid [data-role] .card-head h3 {
+  font-size: var(--fs-24);
+  font-weight: 700;
+  letter-spacing: -.2px;
+}
+
+/* 动态区块（数据速览 / 实时核验 / 总结）同样并入文档流 */
+.doc-mode .panel {
+  border: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--sp-5) 0;
+  background: transparent;
+  box-shadow: none;
+}
+.doc-mode .panel .card-head {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: var(--sp-3);
+  align-items: baseline;
+}
+.doc-mode .panel .card-head h3 {
+  font-size: var(--fs-24);
+  font-weight: 700;
+  letter-spacing: -.2px;
+}
+
+/* 判定块保留容器感，作为整篇的“抬头” */
+.doc-mode .result-header {
+  border: 1px solid var(--line);
+  border-top: 5px solid var(--ink);
+  padding: var(--sp-5);
+  margin-bottom: 0;
+}
+
+/* 句子拆解：三列表格 */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.doc-table th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 6px 12px 6px 0;
+  border-bottom: 2px solid var(--ink);
+}
+.doc-table td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-2);
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.doc-table td:first-child {
+  width: 92px;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.doc-table td:last-child { width: 70px; white-space: nowrap; }
+
+.st-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border: 1px solid;
+  background: #fff;
+}
+.st-pill.given   { color: var(--ok);   border-color: var(--ok); }
+.st-pill.missing { color: var(--bad);  border-color: var(--bad); }
+.st-pill.check   { color: var(--warn); border-color: var(--warn); }
+
+/* 数据速览：压成一行，不再占一整块 */
+.doc-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.doc-inline-label {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.doc-inline-value {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.doc-inline-sub { font-size: 13px; color: var(--muted); }
+.doc-inline-src { font-size: 12px; color: var(--muted); width: 100%; }
+
+@media (max-width: 1100px) {
+  .result-wrap.doc-mode { grid-template-columns: 1fr; }
+  .doc-toc { display: none; }
+}
+
 /* 词库页的判据卡仍需卡片外观（网格布局需要边界） */
 .term-grid .term-card {
   border: 1px solid var(--line);
@@ -672,4 +881,25 @@ a:focus-visible {
   .verdict-letter { width: 56px; height: 56px; font-size: 32px; }
   .result-header h2 { font-size: 24px; }
   .result-actions { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   打印覆盖层（必须放在文件末尾：需覆盖上方文档流布局）
+   ============================================================ */
+@media print {
+  .doc-toc { display: none !important; }
+  .result-wrap.doc-mode {
+    display: block !important;
+    grid-template-columns: none !important;
+  }
+  .doc-body { width: 100% !important; }
+  .doc-mode .result-grid [data-role],
+  .doc-mode .panel {
+    padding: 8pt 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .doc-mode .result-header { padding: 10pt; }
+  .term-fold { break-inside: avoid; page-break-inside: avoid; }
+  .term-fold > summary { list-style: none; }
 }
