@@ -621,6 +621,46 @@ a:focus-visible {
 }
 .type-badge.live { background: var(--ok-soft); color: var(--ok); }
 
+/* 判定等级徽标：实底白字，按 A–E 着色 */
+.tag.vtag {
+  color: #fff;
+  border: none;
+  background: var(--c-700);
+  font-weight: 700;
+  min-width: 22px;
+  text-align: center;
+  padding: 2px 7px;
+}
+.tag.vtag.A { background: var(--ok); }
+.tag.vtag.B { background: var(--verdict-b); }
+.tag.vtag.C { background: var(--bad); }
+.tag.vtag.D { background: var(--gray); }
+.tag.vtag.E { background: var(--sev); }
+
+.vgroup { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 方法页：技术路线代码块 */
+.flow-pre {
+  overflow: auto;
+  background: var(--c-100);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--sp-4);
+  font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* 方法页：最后一组独占整行并分三栏，避免右侧留白 */
+.method-grid .check-group:last-child { grid-column: 1 / -1; }
+.method-grid .check-group:last-child ol { column-count: 3; column-gap: var(--sp-5); }
+
+@media (max-width: 680px) {
+  .method-grid .check-group:last-child ol { column-count: 1; }
+}
+
 /* ---------- 15. 搜索与工具栏 ---------- */
 .search-input {
   border: var(--bw-strong) solid var(--ink);
@@ -855,14 +895,71 @@ a:focus-visible {
   .doc-toc { display: none; }
 }
 
-/* 词库页的判据卡仍需卡片外观（网格布局需要边界） */
+/* ---------- 词库页：左侧分类导航 + 瀑布流卡片 ---------- */
+.lib-layout {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+.lib-nav { position: sticky; top: 74px; }
+.lib-nav-label {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: var(--sp-2);
+}
+.lib-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 0 7px 2px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line-2);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+.lib-nav-item:hover { color: var(--accent); }
+.lib-nav-item.on {
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent);
+  padding-left: 10px;
+}
+.lib-nav-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lib-body { min-width: 0; }
+.lib-body .search-input { width: 100%; margin-bottom: var(--sp-4); }
+.section-count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 瀑布流：消除等高卡片底部的大片空白 */
+.term-grid {
+  display: block;
+  column-count: 2;
+  column-gap: var(--sp-4);
+}
 .term-grid .term-card {
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
   border: 1px solid var(--line);
   border-top: 1px solid var(--line);
   padding: var(--sp-4);
-  margin: 0;
+  margin: 0 0 var(--sp-4);
 }
-.term-grid { gap: var(--sp-4); }
 
 /* ---------- 20. 响应式 ---------- */
 @media (max-width: 980px) {
@@ -870,6 +967,13 @@ a:focus-visible {
   .result-grid { display: flex; flex-direction: column; gap: 1px; background: var(--line); }
   .result-grid [data-role] { padding: var(--sp-4); }
   .matrix { grid-template-columns: 1fr; }
+  .lib-layout { grid-template-columns: 1fr; gap: var(--sp-4); }
+  .lib-nav { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .lib-nav-label { width: 100%; margin-bottom: 2px; }
+  .lib-nav-item { width: auto; border: 1px solid var(--line); padding: 5px 10px; }
+  .lib-nav-item.on { box-shadow: none; background: var(--ink); color: #fff; padding-left: 10px; }
+  .lib-nav-count { color: inherit; opacity: .7; }
+  .term-grid { column-count: 1; }
 }
 @media (max-width: 680px) {
   body { font-size: 16px; }

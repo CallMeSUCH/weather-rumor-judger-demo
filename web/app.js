@@ -868,7 +868,10 @@
         <p class="case-sub">${escapeHTML(c.subtitle)}</p>
         <p class="case-summary">${escapeHTML(c.summary)}</p>
         <div class="case-footer">
-          <span class="tag">判定 ${escapeHTML(c.verdict)} · 置信度 ${escapeHTML(c.confidence)}</span>
+          <span class="vgroup">
+            <span class="tag vtag ${escapeHTML(c.verdict)}">${escapeHTML(c.verdict)}</span>
+            <span class="tag">置信度 ${escapeHTML(c.confidence)}</span>
+          </span>
           <button class="btn btn-soft btn-sm" data-case="${escapeHTML(c.id)}">查看完整判据 →</button>
         </div>
       </article>`;
@@ -2983,7 +2986,10 @@
 
   // ---------- terms ----------
   function termsView() {
-    const cats = ['全部', ...Array.from(new Set(state.data.terms.map(t => t.category)))];
+    const counts = {};
+    state.data.terms.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+    const cats = ['全部', ...Object.keys(counts)];
+    const total = state.data.terms.length;
     return `
       <section class="section" style="margin-top:24px" data-edit-id="terms">
         <div class="section-head" data-edit-id="terms-head">
@@ -2992,14 +2998,22 @@
             <h2>气象知识判据卡</h2>
             <p>包含：基础定义、时间尺度、数值、等价换算、相关知识、常见误用、标准依据。</p>
           </div>
+          <span class="section-count">${total} 张</span>
         </div>
-        <div class="toolbar" data-edit-id="terms-toolbar">
-          <input id="term-search" class="search-input" type="search" placeholder="搜索：极大、最大、特大暴雨、17级、百年一遇、厄尔尼诺……" value="${escapeHTML(state.termQuery)}" />
-          <div class="sample-row" style="margin:0">
-            ${cats.map(c => `<button class="chip ${c === state.termCat ? 'hot' : ''}" data-cat="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}
+        <div class="lib-layout">
+          <aside class="lib-nav" data-edit-id="terms-toolbar">
+            <div class="lib-nav-label">分类</div>
+            ${cats.map(c => `
+              <button class="lib-nav-item ${c === state.termCat ? 'on' : ''}" data-cat="${escapeHTML(c)}">
+                <span class="lib-nav-name">${escapeHTML(c)}</span>
+                <span class="lib-nav-count">${c === '全部' ? total : counts[c]}</span>
+              </button>`).join('')}
+          </aside>
+          <div class="lib-body">
+            <input id="term-search" class="search-input" type="search" placeholder="搜索：极大、最大、特大暴雨、17级、百年一遇、厄尔尼诺……" value="${escapeHTML(state.termQuery)}" />
+            <div id="term-grid" class="term-grid" data-edit-id="term-grid"></div>
           </div>
         </div>
-        <div id="term-grid" class="term-grid" data-edit-id="term-grid"></div>
       </section>`;
   }
 
@@ -3012,7 +3026,7 @@
     $$('[data-cat]').forEach(btn => {
       btn.addEventListener('click', () => {
         state.termCat = btn.dataset.cat;
-        $$('[data-cat]').forEach(b => b.classList.toggle('hot', b.dataset.cat === state.termCat));
+        $$('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === state.termCat));
         renderTermGrid();
       });
     });
@@ -3052,8 +3066,8 @@
           <table class="table">
             <thead><tr><th>案例</th><th>口径完整度</th><th>证据支持度</th><th>判定</th><th>关键缺口</th></tr></thead>
             <tbody>
-              <tr><td>北京“最大暴雨”</td><td>高</td><td>部分</td><td><span class="tag">B</span></td><td>24h 窗口、站网、1959 基准</td></tr>
-              <tr><td>“最强超强厄尔尼诺”</td><td>中低</td><td>高</td><td><span class="tag">B</span></td><td>候/旬/月/ONI、预测当事实、生成图</td></tr>
+              <tr><td>北京“最大暴雨”</td><td>高</td><td>部分</td><td><span class="tag vtag B">B</span></td><td>24h 窗口、站网、1959 基准</td></tr>
+              <tr><td>“最强超强厄尔尼诺”</td><td>中低</td><td>高</td><td><span class="tag vtag B">B</span></td><td>候/旬/月/ONI、预测当事实、生成图</td></tr>
             </tbody>
           </table>
         </div>
@@ -3160,11 +3174,11 @@
           <table class="table">
             <thead><tr><th>等级</th><th>含义</th><th>典型</th></tr></thead>
             <tbody>
-              <tr><td><span class="tag">A</span></td><td>成立：术语、口径、证据都支持</td><td>24h 260 mm，达特大暴雨</td></tr>
-              <tr><td><span class="tag">B</span></td><td>条件成立：某种口径下成立</td><td>巅峰 17 级成立；登陆 17 级待查</td></tr>
-              <tr><td><span class="tag">C</span></td><td>术语/逻辑不成立</td><td>1 小时“特大暴雨”；18 级</td></tr>
-              <tr><td><span class="tag">D</span></td><td>信息不足：缺关键口径/证据</td><td>“史上最强台风”</td></tr>
-              <tr><td><span class="tag">E</span></td><td>与事实不符</td><td>最佳路径登陆 14 级，传说 17 级</td></tr>
+              <tr><td><span class="tag vtag A">A</span></td><td>成立：术语、口径、证据都支持</td><td>24h 260 mm，达特大暴雨</td></tr>
+              <tr><td><span class="tag vtag B">B</span></td><td>条件成立：某种口径下成立</td><td>巅峰 17 级成立；登陆 17 级待查</td></tr>
+              <tr><td><span class="tag vtag C">C</span></td><td>术语/逻辑不成立</td><td>1 小时“特大暴雨”；18 级</td></tr>
+              <tr><td><span class="tag vtag D">D</span></td><td>信息不足：缺关键口径/证据</td><td>“史上最强台风”</td></tr>
+              <tr><td><span class="tag vtag E">E</span></td><td>与事实不符</td><td>最佳路径登陆 14 级，传说 17 级</td></tr>
             </tbody>
           </table>
         </div>
@@ -3182,7 +3196,7 @@
           <p class="small muted">
             信源库 + 定时采集 + 本地缓存 + 规则引擎。运行时只查本地缓存/官方 API；报告给出原始网址、访问日期、快照。
           </p>
-          <pre style="overflow:auto;background:#f8fbfd;border:1px solid #eaf0f6;border-radius:10px;padding:14px;font-size:12px;line-height:1.6">输入（文字/图片/URL）
+          <pre class="flow-pre">输入（文字/图片/URL）
   → OCR（Windows 本地，已接） + 图表识别（待接） + 句子拆解
   → 智能归类（现象/参数/模糊词/句子类型）
   → 逻辑漏洞检查（19 项，MVP 14 项）
