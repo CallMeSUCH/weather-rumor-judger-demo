@@ -170,6 +170,20 @@
     '杭州', '合肥', '福州', '南昌', '长沙', '贵阳', '成都', '昆明', '南宁', '台北'
   ];
 
+  // 非地球实体：地面气象观测规范不适用
+  const NON_EARTH = ['火星', '月球', '木星', '土星', '金星', '水星', '冥王星',
+    '太阳系', '银河系', '外星', '外星球', '星际', '空间站', '国际空间站', '太空', '宇宙'];
+
+  // 沿海省级行政区：海洋类现象与台风登陆只能出现在这里
+  const COASTAL = ['辽宁', '河北', '天津', '山东', '江苏', '上海', '浙江', '福建',
+    '广东', '广西', '海南', '台湾', '香港', '澳门'];
+
+  // “全市”“城区”这类词不是行政地名，不能当候选
+  const PLACE_STOP = ['全市', '城区', '市区', '全省', '全区', '地区', '灾区', '郊区', '景区', '山区', '库区', '牧区'];
+
+  // 带行政后缀的地名候选：不依赖白名单，用于发现“写了但库里没有”的地名
+  const PLACE_RE = /[\u4e00-\u9fa5]{2,6}(?:省|市|县|区|镇|乡|盟|旗)/g;
+
   const SEA_AREAS = ['西北太平洋', '南海', '东海', '黄海', '渤海', '赤道中东太平洋', '赤道太平洋', '西太平洋'];
   const WMO_STATIONS = {
     '北京': '54511', '天津': '54527', '上海': '58367', '重庆': '57516',
@@ -396,6 +410,11 @@
     else if (place) { locationRaw = place; locationLevel = '省/市'; }
     if (/(全市|城区|全省|全境)/.test(text) && place) locationLevel = '省/市（区域平均）';
 
+    // 候选地名：不依赖白名单，用来发现“写了但库里没有”的地名
+    const placeCandidates = Array.from(new Set(
+      `${text} ${locationRaw}`.match(PLACE_RE) || []
+    )).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+
     const phenomenon = PHENOMENA.find(p => p.words.some(w => text.includes(w)))?.key || '未识别';
 
     const quantities = [];
@@ -427,6 +446,7 @@
       time_scale: timeScale,
       location_raw: locationRaw,
       location_level: locationLevel,
+      place_candidates: placeCandidates,
       source_url: sourceUrl,
       phenomenon,
       quantities,
@@ -471,6 +491,48 @@
   }
 
   // ---------- checks ----------
+  // 实体层校验：地点是否真实存在、现象与地理是否相容
+  // 三态：verified（命中白名单）/ unverified（写了但库里没有）/ absent（没写）
+  function checkEntity(text, ex, meta = {}) {
+    const src = `${text} ${meta.location || ''}`;
+    const out = { nonEarth: null, geoIncompatible: null, state: 'absent', candidates: [], unverified: [] };
+
+    const ne = NON_EARTH.find(w => src.includes(w));
+    if (ne) { out.nonEarth = ne; return out; }
+
+    const cands = Array.from(new Set([
+      ...(ex.place_candidates || []),
+      ...(String(meta.location || '').match(PLACE_RE) || [])
+    ])).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+    out.candidates = cands;
+
+    const isVerified = (c) => LOCATIONS.some(l => c.includes(l) || l.includes(c));
+    out.unverified = cands.filter(c => !isVerified(c));
+
+    if (cands.length) {
+      if (!out.unverified.length) {
+        out.state = 'verified';
+      } else if (LOCATIONS.some(l => src.includes(l))) {
+        // 上级地名认得出来，只是下级没收录：不能当造假处理
+        out.state = 'partially';
+      } else {
+        out.state = 'unverified';
+      }
+    } else if (LOCATIONS.some(l => text.includes(l)) || SEA_AREAS.some(s => text.includes(s)) || STATIONS.some(s => text.includes(s))) {
+      out.state = 'verified';
+    }
+
+    const marine = /海浪|海雾|风暴潮/.test(text);
+    const typhoonLanding = /(台风|热带气旋)/.test(text) && /登陆/.test(text);
+    const isCoastal = COASTAL.some(p => src.includes(p)) || SEA_AREAS.some(s => src.includes(s));
+    if ((marine || typhoonLanding) && !isCoastal) {
+      out.geoIncompatible = marine
+        ? '海浪 / 海雾 / 风暴潮只能出现在沿海或海区'
+        : '台风“登陆”必须发生在沿海省级行政区';
+    }
+    return out;
+  }
+
   function runChecks(text, meta, ex) {
     const checks = [];
     const add = (id, name, status, note) => checks.push({ id, name, status, note });
@@ -511,6 +573,23 @@
     add('time', '时间尺度', hasTime && (hasWindow || hasScale) ? 'pass' : 'fail', hasTime && (hasWindow || hasScale) ? `时间：${meta.event_time || ex.time_raw}；窗口：${meta.time_window || ex.time_window}；尺度：${meta.time_scale || ex.time_scale}` : '缺时间窗口/尺度；不同尺度不能直接比较。');
     add('tense', '观测/预测/影响', meta.claim_type && meta.claim_type !== '未说明' ? (meta.claim_type.includes('混合') ? 'warn' : 'pass') : 'fail', meta.claim_type && meta.claim_type !== '未说明' ? `当前标为：${meta.claim_type}` : '未说明是观测、预测还是影响。');
     add('space', '空间尺度', hasLocation ? (meta.location_level && meta.location_level.includes('未说明') ? 'warn' : 'pass') : 'fail', hasLocation ? `地点：${meta.location || ex.location_raw}；级别：${meta.location_level || ex.location_level}` : '缺地点/站/区域。');
+
+    // 实体层：地点是否真实存在、现象与地理位置是否相容
+    const entity = checkEntity(text, ex, meta);
+    if (entity.nonEarth) {
+      add('location_valid', '地点真实性', 'fail', `识别到“${entity.nonEarth}”，不属于地球大气观测范围；地面气象观测规范不适用。`);
+    } else if (entity.state === 'unverified') {
+      add('location_valid', '地点真实性', 'fail', `「${entity.unverified.join('、')}」未在行政区划库中（当前库仅覆盖 76 个主要省/市），无法核实其是否存在。若确为真实地名，请补充上级行政区（如“浙江省安吉县”）。`);
+    } else if (entity.state === 'partially') {
+      add('location_valid', '地点真实性', 'warn', `上级地名已识别，但「${entity.unverified.join('、')}」未在库中；若是真实小地名，可人工确认后忽略。`);
+    } else if (entity.state === 'absent') {
+      add('location_valid', '地点真实性', 'fail', '未识别到任何地名，无法核验事件发生地。');
+    } else {
+      add('location_valid', '地点真实性', 'pass', `地点「${meta.location || entity.candidates[0] || '已识别'}」命中行政区划库。`);
+    }
+    if (entity.geoIncompatible) {
+      add('geo_consistency', '地理相容性', 'fail', `${entity.geoIncompatible}；当前地点不满足该现象的物理前提。`);
+    }
     add('reference', '比较基准', /(以来|史上|近\s*\d+\s*年|同期|破纪录)/.test(text) ? 'warn' : 'pass', /(以来|史上|近\s*\d+\s*年|同期|破纪录)/.test(text) ? '出现“史上/以来/同期”等比较，需要说明基准期、站网、资料年限。' : '未出现历史比较。');
     const periodQualifiers = ex.period_qualifiers || [];
     if (periodQualifiers.length) {
@@ -538,6 +617,12 @@
   }
 
   function decideVerdict(text, meta, ex, checks) {
+    // 实体层优先：地点不存在或物理不可能时，任何口径都无法让它成立
+    const entity = checkEntity(text, ex, meta);
+    if (entity.nonEarth) return 'C';
+    if (entity.geoIncompatible) return 'C';
+    if (entity.state === 'unverified') return 'D';
+
     if (/超级暴雨|超级大暴雨/.test(text)) return 'C';
     if (/特大暴雨/.test(text) && /1\s*小时/.test(text)) return 'C';
     const rainfallCheck = checks.find(c => c.id === 'rainfall_extreme');
@@ -548,6 +633,8 @@
     if (ex.phenomenon === '厄尔尼诺' && !/(Niño|Nino|ONI|候|旬|月|季|3\s*个月)/.test(text)) return 'D';
 
     const failIds = checks.filter(c => c.status === 'fail').map(c => c.id);
+    if (failIds.includes('geo_consistency')) return 'C';
+    if (failIds.includes('location_valid')) return 'D';
     if (failIds.includes('term')) return 'C';
     if (failIds.includes('time') || failIds.includes('space') || failIds.includes('tense') || failIds.includes('data')) return 'D';
     if (failIds.includes('subject')) return 'D';
@@ -1197,6 +1284,7 @@
               <div class="field">
                 <label for="f-location">地点 / 区域</label>
                 <input id="f-location" type="text" value="${escapeHTML(v.location)}" placeholder="例：北京市（全市平均）" />
+                <span class="hint" id="loc-hint"></span>
               </div>
               <div class="field">
                 <label for="f-level">地点级别</label>
@@ -1255,6 +1343,31 @@
     };
     publishInput?.addEventListener('input', syncRelative);
     publishInput?.addEventListener('change', syncRelative);
+
+    // 地点存在性即时校验：不阻止提交，但要让“库里没有”可见
+    const locInput = $('#f-location');
+    const locHint = $('#loc-hint');
+    const checkLoc = () => {
+      if (!locHint) return;
+      const val = (locInput?.value || '').trim();
+      if (!val || val === '未说明') {
+        locHint.textContent = '未填写地点，系统会判“信息不足”。';
+        locHint.className = 'hint';
+        return;
+      }
+      const cands = val.match(PLACE_RE) || [];
+      const pool = cands.length ? cands : [val];
+      const hit = pool.some(c => LOCATIONS.some(l => c.includes(l) || l.includes(c)));
+      if (hit) {
+        locHint.textContent = '✓ 地名命中行政区划库';
+        locHint.className = 'hint ok';
+      } else {
+        locHint.textContent = '⚠ 未在行政区划库中（当前仅覆盖 76 个主要省/市），无法核实；如为真实地名，请补上级行政区。';
+        locHint.className = 'hint warn';
+      }
+    };
+    locInput?.addEventListener('input', checkLoc);
+    checkLoc();
 
     $('#confirm-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
