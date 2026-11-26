@@ -576,7 +576,10 @@
     const marine = /海浪|海雾|风暴潮/.test(text);
     const typhoonLanding = /(台风|热带气旋)/.test(text) && /登陆/.test(text);
     const isCoastal = COASTAL.some(p => src.includes(p)) || SEA_AREAS.some(s => src.includes(s));
-    if ((marine || typhoonLanding) && !isCoastal) {
+    // 只有在明确给出了地点、且该地点不是沿海时才判不相容；
+    // 没写地点的句子交给“空间尺度”检查判信息不足，不要在这里抢先下结论
+    const hasPlace = cands.length > 0 || COASTAL.some(p => src.includes(p)) || SEA_AREAS.some(s => src.includes(s));
+    if ((marine || typhoonLanding) && hasPlace && !isCoastal) {
       out.geoIncompatible = marine
         ? '海浪 / 海雾 / 风暴潮只能出现在沿海或海区'
         : '台风“登陆”必须发生在沿海省级行政区';
@@ -614,6 +617,35 @@
     if (/特大暴雨/.test(text)) {
       const oneHour = /1\s*小时/.test(text);
       add('term_consistency', '术语一致性', oneHour ? 'fail' : 'warn', oneHour ? '“特大暴雨”是 24 小时 ≥250 mm（12 小时 ≥140 mm），不能用 1 小时雨量套用；1 小时 100 mm 属于短时强降水。' : '“特大暴雨”必须说明 24 小时/12 小时口径，不能只写“特大”。');
+    }
+
+    // 500—999 mm/24h：超过常规极值量级，必须给站点与来源（不直接判假）
+    if (maxRain >= 500 && maxRain < 1000 && /(24\s*小时|单日)/.test(text)) {
+      add('rainfall_high', '雨量量级', 'warn', `${maxRain} mm/24h 是特大暴雨阈值（250 mm）的 ${(maxRain / 250).toFixed(1)} 倍，属极端量级；必须给出站点、时段和官方来源，不能用单站极值代表区域平均。`);
+    }
+
+    // 物理量级上限：超出地面观测可能范围，先怀疑单位或数值
+    const windVals = [...text.matchAll(/(\d{2,3}(?:\.\d+)?)\s*(m\/s|米\/秒|米每秒|米每秒)/g)].map(m => Number(m[1]));
+    const maxWind = windVals.length ? Math.max(...windVals) : 0;
+    if (maxWind >= 100) {
+      add('wind_extreme', '风速量级', 'fail', `${maxWind} m/s 超出地面风速的物理量级（17 级约 56.1–61.2 m/s），需核对单位（是否误把 km/h 写成 m/s）或数值。`);
+    }
+    const tempVals = [...text.matchAll(/(-?\d{1,3}(?:\.\d+)?)\s*(℃|摄氏度)/g)].map(m => Number(m[1]));
+    const extremeTemp = tempVals.find(v => v >= 60 || v <= -90);
+    if (extremeTemp !== undefined) {
+      add('temp_extreme', '气温量级', 'fail', `${extremeTemp}℃ 超出地面气温的物理量级，需核对单位或数值。`);
+    }
+
+    // 未来日期却按“已发生”陈述：时间逻辑矛盾
+    const evMatch = String(meta.event_time || '').match(/(20\d{2})[-年\/.](\d{1,2})[-月\/.](\d{1,2})/);
+    if (evMatch) {
+      const ev = new Date(Number(evMatch[1]), Number(evMatch[2]) - 1, Number(evMatch[3]));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const forecasting = /(预计|预测|可能|或将|将要|未来)/.test(text) || String(meta.claim_type || '').includes('预测');
+      if (ev > today && !forecasting) {
+        add('future_claim', '时间逻辑', 'fail', `事件时间 ${evMatch[1]}-${String(evMatch[2]).padStart(2, '0')}-${String(evMatch[3]).padStart(2, '0')} 在未来，但句子按已发生陈述；要么是预测，要么日期有误。`);
+      }
     }
     if (/(17\s*级|17级)/.test(text) && /超强台风/.test(text)) {
       add('typhoon_consistency', '台风术语一致性', 'warn', '超强台风是 ≥51.0 m/s（16 级或以上），不等于 17 级；17 级是风力等级，还要注明 3 秒/1 分钟/2 分钟/10 分钟平均。');
@@ -674,6 +706,11 @@
     if (entity.nonEarth) return 'C';
     if (entity.geoIncompatible) return 'C';
     if (entity.state === 'unverified') return 'D';
+
+    // 物理量级与时间逻辑：必须排在所有硬编码 B 分支之前，否则会被绕过
+    const hasFail = (id) => checks.some(c => c.id === id && c.status === 'fail');
+    if (hasFail('wind_extreme') || hasFail('temp_extreme')) return 'C';
+    if (hasFail('future_claim')) return 'D';
 
     if (/超级暴雨|超级大暴雨/.test(text)) return 'C';
     if (/特大暴雨/.test(text) && /1\s*小时/.test(text)) return 'C';
@@ -3409,7 +3446,7 @@
         event_time: ex.time_raw !== '未说明' ? ex.time_raw : '',
         time_window: ex.time_window,
         time_scale: ex.time_scale,
-        location: ex.location_raw,
+        location: item.location || ex.location_raw,
         location_level: ex.location_level,
         source_url: ex.source_url,
         claim_type: ex.claim_type
@@ -3431,7 +3468,7 @@
         自测结果：<b>${pass} / ${rows.length}</b> 通过。
         ${allOk ? '规则与预期一致。' : '有偏差，说明规则或预期需要校准。'}
       </div>
-      <table class="table" style="margin-top:8px">
+      <table class="table test-table">
         <thead><tr><th>说法</th><th>预期</th><th>实际</th><th>结果</th><th>备注</th></tr></thead>
         <tbody>
           ${rows.map(r => `
@@ -3439,7 +3476,7 @@
               <td>${escapeHTML(r.claim)}</td>
               <td><b>${escapeHTML(r.expected)}</b></td>
               <td><b>${escapeHTML(r.actual)}</b></td>
-              <td>${r.ok ? '<span class="tag">通过</span>' : '<span class="tag" style="background:var(--bad-soft);color:var(--bad)">偏差</span>'}</td>
+              <td>${r.ok ? '<span class="tag ok">通过</span>' : '<span class="tag fail">偏差</span>'}</td>
               <td class="small muted">${escapeHTML(r.note || '')}</td>
             </tr>`).join('')}
         </tbody>
