@@ -42,7 +42,7 @@
 
   async function boot() {
     try {
-      const [terms, cases, sources, testset, adapters] = await Promise.all([
+      const [terms, cases, sources, testset, adapters, regions] = await Promise.all([
         fetch('data/terms.json', { cache: 'no-store' }).then(r => {
           if (!r.ok) throw new Error('terms.json');
           return r.json();
@@ -62,9 +62,13 @@
         fetch('data/adapters.json', { cache: 'no-store' }).then(r => {
           if (!r.ok) throw new Error('adapters.json');
           return r.json();
-        })
+        }),
+        // 行政区划库：缺失时降级为内置的 76 条白名单，不阻断启动
+        fetch('data/regions.json', { cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
       ]);
-      state.data = { terms, cases, sources, testset, adapters };
+      state.data = { terms, cases, sources, testset, adapters, regions };
     } catch (err) {
       $('#app').innerHTML = `
         <section class="section" style="margin-top:26px">
@@ -101,7 +105,12 @@
   }
 
   function route() {
-    const hash = (location.hash || '#/home').replace(/^#\/?/, '');
+    const raw = location.hash || '';
+    // 页内锚点（#sec-logic 等）只负责滚动，不切换视图；
+    // 但首次加载（页面还没渲染）仍要正常出首页
+    const app = $('#app');
+    if (app && app.children.length && raw && !raw.startsWith('#/')) return;
+    const hash = (raw || '#/home').replace(/^#\/?/, '');
     const allowed = ['home', 'confirm', 'result', 'terms', 'cases', 'sources', 'method'];
     let view = allowed.includes(hash) ? hash : 'home';
     if (view === 'confirm' && !state.pending) view = 'home';
@@ -402,18 +411,28 @@
 
     let locationRaw = '未说明';
     let locationLevel = '未说明';
+    // 候选地名：不依赖白名单，用来发现“写了但库里没有”的地名
+    const placeCandidates = Array.from(new Set(
+      text.match(PLACE_RE) || []
+    )).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+
     const station = STATIONS.find(s => text.includes(s));
     const sea = SEA_AREAS.find(s => text.includes(s));
     const place = LOCATIONS.find(s => text.includes(s));
+    const knownCand = placeCandidates.find(isKnownPlace);
     if (station) { locationRaw = station; locationLevel = '站点'; }
     else if (sea) { locationRaw = sea; locationLevel = '海区'; }
     else if (place) { locationRaw = place; locationLevel = '省/市'; }
-    if (/(全市|城区|全省|全境)/.test(text) && place) locationLevel = '省/市（区域平均）';
+    else if (knownCand) {
+      locationRaw = knownCand;
+      locationLevel = /(县|区|镇|乡)$/.test(knownCand) ? '区县' : '省/市';
+    }
+    if (/(全市|城区|全省|全境)/.test(text) && (place || knownCand)) locationLevel = '省/市（区域平均）';
 
-    // 候选地名：不依赖白名单，用来发现“写了但库里没有”的地名
-    const placeCandidates = Array.from(new Set(
-      `${text} ${locationRaw}`.match(PLACE_RE) || []
-    )).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+    // 白名单命中的地名（如“北京”）没有行政后缀，补进候选
+    if (locationRaw !== '未说明' && !placeCandidates.includes(locationRaw)) {
+      placeCandidates.push(locationRaw);
+    }
 
     const phenomenon = PHENOMENA.find(p => p.words.some(w => text.includes(w)))?.key || '未识别';
 
@@ -491,6 +510,38 @@
   }
 
   // ---------- checks ----------
+  // 行政区划库（regions.json）：省/市/县扁平集合，用于地名存在性校验
+  let placeSetCache = null;
+  function placeSet() {
+    if (!placeSetCache) {
+      const r = state.data.regions;
+      placeSetCache = new Set([
+        ...(r?.provinces || []),
+        ...(r?.cities || []),
+        ...(r?.counties || [])
+      ]);
+    }
+    return placeSetCache;
+  }
+
+  function isKnownPlace(cand) {
+    const base = String(cand || '').replace(/[（(].*?[)）]/g, '').trim();
+    if (!base) return false;
+    const set = placeSet();
+    if (set.has(base)) return true;
+    // 候选可能连写多级（如“浙江安吉县”），做包含判断
+    for (const n of set) {
+      if (n.length >= 2 && (base.includes(n) || n.includes(base))) return true;
+    }
+    // 兜底：regions.json 没加载时仍可用内置白名单
+    return LOCATIONS.some(l => base.includes(l) || l.includes(base));
+  }
+
+  function isKnownProvince(src) {
+    const list = state.data.regions?.provinces || LOCATIONS;
+    return list.some(p => src.includes(p));
+  }
+
   // 实体层校验：地点是否真实存在、现象与地理是否相容
   // 三态：verified（命中白名单）/ unverified（写了但库里没有）/ absent（没写）
   function checkEntity(text, ex, meta = {}) {
@@ -506,13 +557,13 @@
     ])).filter(w => !PLACE_STOP.some(s => w.includes(s)));
     out.candidates = cands;
 
-    const isVerified = (c) => LOCATIONS.some(l => c.includes(l) || l.includes(c));
+    const isVerified = (c) => isKnownPlace(c);
     out.unverified = cands.filter(c => !isVerified(c));
 
     if (cands.length) {
       if (!out.unverified.length) {
         out.state = 'verified';
-      } else if (LOCATIONS.some(l => src.includes(l))) {
+      } else if (isKnownProvince(src)) {
         // 上级地名认得出来，只是下级没收录：不能当造假处理
         out.state = 'partially';
       } else {
@@ -579,13 +630,14 @@
     if (entity.nonEarth) {
       add('location_valid', '地点真实性', 'fail', `识别到“${entity.nonEarth}”，不属于地球大气观测范围；地面气象观测规范不适用。`);
     } else if (entity.state === 'unverified') {
-      add('location_valid', '地点真实性', 'fail', `「${entity.unverified.join('、')}」未在行政区划库中（当前库仅覆盖 76 个主要省/市），无法核实其是否存在。若确为真实地名，请补充上级行政区（如“浙江省安吉县”）。`);
+      add('location_valid', '地点真实性', 'fail', `「${entity.unverified.join('、')}」未在行政区划库（省/市/县三级）中，无法核实其是否存在。若确为真实地名，请补充上级行政区（如“浙江省安吉县”）。`);
     } else if (entity.state === 'partially') {
       add('location_valid', '地点真实性', 'warn', `上级地名已识别，但「${entity.unverified.join('、')}」未在库中；若是真实小地名，可人工确认后忽略。`);
     } else if (entity.state === 'absent') {
       add('location_valid', '地点真实性', 'fail', '未识别到任何地名，无法核验事件发生地。');
     } else {
-      add('location_valid', '地点真实性', 'pass', `地点「${meta.location || entity.candidates[0] || '已识别'}」命中行政区划库。`);
+      const shown = (meta.location && meta.location !== '未说明') ? meta.location : (entity.candidates[0] || '已识别');
+      add('location_valid', '地点真实性', 'pass', `地点「${shown}」命中行政区划库。`);
     }
     if (entity.geoIncompatible) {
       add('geo_consistency', '地理相容性', 'fail', `${entity.geoIncompatible}；当前地点不满足该现象的物理前提。`);
@@ -1357,12 +1409,12 @@
       }
       const cands = val.match(PLACE_RE) || [];
       const pool = cands.length ? cands : [val];
-      const hit = pool.some(c => LOCATIONS.some(l => c.includes(l) || l.includes(c)));
+      const hit = pool.some(c => isKnownPlace(c));
       if (hit) {
         locHint.textContent = '✓ 地名命中行政区划库';
         locHint.className = 'hint ok';
       } else {
-        locHint.textContent = '⚠ 未在行政区划库中（当前仅覆盖 76 个主要省/市），无法核实；如为真实地名，请补上级行政区。';
+        locHint.textContent = '⚠ 未在行政区划库中找到（覆盖省/市/县三级）；如为真实地名，请补上级行政区。';
         locHint.className = 'hint warn';
       }
     };

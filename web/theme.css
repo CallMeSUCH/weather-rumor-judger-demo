@@ -764,6 +764,9 @@ a:focus-visible {
 
 .doc-body { min-width: 0; }
 
+/* 锚点跳转时为吸顶导航留出偏移，否则标题被顶栏盖住 */
+.doc-body [id] { scroll-margin-top: 76px; }
+
 /* 取消两栏与等高配对，改为连续区块 */
 .doc-mode .result-grid {
   display: block;
