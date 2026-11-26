@@ -636,6 +636,42 @@
       add('temp_extreme', '气温量级', 'fail', `${extremeTemp}℃ 超出地面气温的物理量级，需核对单位或数值。`);
     }
 
+    // 气压：统一换算到 hPa。地面气压物理区间约 800–1100 hPa
+    const presVals = [...text.matchAll(/(\d{3,5}(?:\.\d+)?)\s*(hPa|hpa|百帕|kPa|kpa|千帕|mb|毫巴|帕)/g)]
+      .map(m => {
+        const v = Number(m[1]);
+        const unit = m[2];
+        if (/^k/i.test(unit) || /千帕/.test(unit)) return v * 10;   // kPa / 千帕 → hPa
+        if (/百帕|hpa|mb|毫巴/i.test(unit)) return v;                // 已是 hPa 量级（"百帕"含"帕"，须先判）
+        if (/^帕$/.test(unit)) return v / 100;                      // 纯 Pa → hPa
+        return v;
+      });
+    const badPres = presVals.find(v => v < 800 || v > 1100);
+    const oddPres = presVals.find(v => (v >= 800 && v < 870) || (v > 1080 && v <= 1100));
+    if (badPres !== undefined) {
+      add('pressure_extreme', '气压量级', 'fail', `${badPres} hPa 超出地面气压的物理区间（约 800–1100 hPa），需核对单位（Pa / kPa / hPa）或数值。`);
+    } else if (oddPres !== undefined) {
+      add('pressure_extreme', '气压量级', 'warn', `${oddPres} hPa 属极值量级（强台风中心或高压中心），需给出站点与时间。`);
+    }
+
+    // 相对湿度：定义域 0–100%
+    const humVals = [...text.matchAll(/(\d{1,3}(?:\.\d+)?)\s*[%％]/g)].map(m => Number(m[1]));
+    if (humVals.some(v => v > 100)) {
+      add('humidity_range', '湿度范围', 'fail', `相对湿度 ${Math.max(...humVals)}% 超出 0–100% 的定义范围；若指比湿，应带单位（g/kg）。`);
+    }
+
+    // 能见度：只在带单位时判断，避免把“200 米”误读成“200 公里”
+    const visMatch = text.match(/能见度[^0-9]{0,6}(\d+(?:\.\d+)?)\s*(公里|千米|km|米|m)?/i);
+    if (visMatch && visMatch[2]) {
+      const v = Number(visMatch[1]);
+      const km = /公里|千米|km/i.test(visMatch[2]) ? v : v / 1000;
+      if (km > 100) {
+        add('visibility_extreme', '能见度量级', 'warn', `能见度 ${visMatch[1]}${visMatch[2]} 超出地面观测常见范围（通常 ≤30–50 km），需核对单位（米 / 公里）。`);
+      } else if (km < 1 && /(晴朗|晴天|天气晴|晴到多云)/.test(text)) {
+        add('visibility_conflict', '能见度与天气', 'warn', `能见度低于 1 km 时一般伴随雾、霾或沙尘，与“晴”的描述不一致。`);
+      }
+    }
+
     // 未来日期却按“已发生”陈述：时间逻辑矛盾
     const evMatch = String(meta.event_time || '').match(/(20\d{2})[-年\/.](\d{1,2})[-月\/.](\d{1,2})/);
     if (evMatch) {
@@ -709,7 +745,7 @@
 
     // 物理量级与时间逻辑：必须排在所有硬编码 B 分支之前，否则会被绕过
     const hasFail = (id) => checks.some(c => c.id === id && c.status === 'fail');
-    if (hasFail('wind_extreme') || hasFail('temp_extreme')) return 'C';
+    if (hasFail('wind_extreme') || hasFail('temp_extreme') || hasFail('pressure_extreme') || hasFail('humidity_range')) return 'C';
     if (hasFail('future_claim')) return 'D';
 
     if (/超级暴雨|超级大暴雨/.test(text)) return 'C';
