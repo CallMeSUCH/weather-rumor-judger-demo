@@ -760,7 +760,6 @@
     const failIds = checks.filter(c => c.status === 'fail').map(c => c.id);
     if (failIds.includes('geo_consistency')) return 'C';
     if (failIds.includes('location_valid')) return 'D';
-    if (failIds.includes('term')) return 'C';
     if (failIds.includes('time') || failIds.includes('space') || failIds.includes('tense') || failIds.includes('data')) return 'D';
     if (failIds.includes('subject')) return 'D';
     if (ex.terms.length) return 'B';
@@ -982,7 +981,7 @@
               最后拉取官方数据回答：<strong>在什么条件下成立，在什么条件下不成立。</strong>
             </p>
             <div class="hero-stats">
-              <div class="hero-stat"><strong>19</strong><span>项逻辑漏洞检查</span></div>
+              <div class="hero-stat"><strong>33</strong><span>项逻辑漏洞检查</span></div>
               <div class="hero-stat"><strong>23</strong><span>张术语判据卡</span></div>
               <div class="hero-stat"><strong>A–E</strong><span>五级判定</span></div>
             </div>
@@ -3437,7 +3436,7 @@
           <pre class="flow-pre">输入（文字/图片/URL）
   → OCR（Windows 本地，已接） + 图表识别（待接） + 句子拆解
   → 智能归类（现象/参数/模糊词/句子类型）
-  → 逻辑漏洞检查（19 项，MVP 14 项）
+  → 逻辑漏洞检查（33 项）
   → 决策树补问（时间/地点/来源）
   → 知识库（术语/阈值/等级）
   → 数据网关（本地缓存/官方 API）
