@@ -188,6 +188,11 @@
   const COASTAL = ['辽宁', '河北', '天津', '山东', '江苏', '上海', '浙江', '福建',
     '广东', '广西', '海南', '台湾', '香港', '澳门'];
 
+  // 热带低地城市：出现 -5℃ 以下日最低温，已明显超出当地气候背景，
+  // 优先怀疑地点、日期或单位错误，而不是直接接受“破纪录”说法。
+  const TROPICAL_LOWLAND = ['三亚', '海口', '三沙', '深圳', '珠海', '湛江', '阳江',
+    '北海', '防城港', '厦门', '汕头', '文昌', '琼海', '万宁', '陵水', '东方', '儋州'];
+
   // “全市”“城区”这类词不是行政地名，不能当候选
   const PLACE_STOP = ['全市', '城区', '市区', '全省', '全区', '地区', '灾区', '郊区', '景区', '山区', '库区', '牧区'];
 
@@ -382,7 +387,7 @@
   function extract(text) {
     const sourceUrl = (text.match(/https?:\/\/[^\s，。；）)]+/) || [''])[0];
     const abs = text.match(/(20\d{2})\s*[年\-\/.]\s*(\d{1,2})\s*[月\-\/.]\s*(\d{1,2})/);
-    const rel = text.match(/(昨天|今天|明天|昨晚|今晨|前天|后天)/);
+    const rel = text.match(/(昨天|昨日|今天|今日|明天|明日|昨晚|今晨|前天|后天)/);
     const hours = text.match(/(\d+(?:\.\d+)?)\s*(小时|h|天)/i);
     const month = text.match(/(\d{1,2})\s*月/);
     const forecast = /(预计|或|可能|将|前后|逼近|即将)/.test(text);
@@ -421,21 +426,15 @@
 
     const station = STATIONS.find(s => text.includes(s));
     const sea = SEA_AREAS.find(s => text.includes(s));
-    const regionRank = (name) => {
-      const regions = state.data.regions;
-      if (regions?.counties?.includes(name)) return 2;
-      if (regions?.cities?.includes(name)) return 1;
-      return 0;
-    };
-    const place = LOCATIONS
-      .filter(s => text.includes(s))
-      .sort((a, b) => regionRank(b) - regionRank(a) || b.length - a.length)[0];
+    const placeMatches = LOCATIONS.filter(s => text.includes(s));
+    const place = placeMatches[placeMatches.length - 1];
+    const provinceSet = new Set(state.data.regions?.provinces || []);
     const knownCand = placeCandidates.find(isKnownPlace);
     if (station) { locationRaw = station; locationLevel = '站点'; }
     else if (sea) { locationRaw = sea; locationLevel = '海区'; }
     else if (place) {
       locationRaw = place;
-      locationLevel = regionRank(place) === 1 ? '城市' : '省/市';
+      locationLevel = provinceSet.has(place) ? '省/市' : '城市';
     }
     else if (knownCand) {
       locationRaw = knownCand;
@@ -449,6 +448,12 @@
     }
 
     const phenomenon = PHENOMENA.find(p => p.words.some(w => text.includes(w)))?.key || '未识别';
+    // 只有日期（如“昨日”“2026-05-20”）的日尺度天气声明，默认按自然日核验。
+    if ((abs || rel) && timeWindow === '未说明' && timeScale === '未说明' &&
+        ['降雨', '暴雨', '高温', '寒潮'].includes(phenomenon)) {
+      timeWindow = '自然日 00—24';
+      timeScale = '日';
+    }
 
     const quantities = [];
     const qRe = /(\d+(?:\.\d+)?)\s*(mm|毫米|m\/s|米\/秒|℃|度|级|米|m)/gi;
@@ -472,6 +477,10 @@
       const names = [t.term, ...(t.aliases || [])];
       return names.some(n => n && text.includes(n));
     });
+    if (!terms.some(t => t.id === 'record_claim') && /(纪录|记录|史上|有记录以来)/.test(text)) {
+      const recordTerm = getTerm('record_claim');
+      if (recordTerm) terms.push(recordTerm);
+    }
 
     return {
       time_raw: timeRaw,
@@ -502,7 +511,7 @@
   }
 
   function relativeTerm(text) {
-    return (String(text || '').match(/(昨天|今天|明天|昨晚|今晨|前天|后天)/) || [])[1] || '';
+    return (String(text || '').match(/(昨天|昨日|今天|今日|明天|明日|昨晚|今晨|前天|后天)/) || [])[1] || '';
   }
 
   function deriveRelativeEvent(claim, publish) {
@@ -511,7 +520,7 @@
     const m = String(publish || '').match(/(20\d{2})\s*[年\-/.]\s*(\d{1,2})\s*[月\-/.]\s*(\d{1,2})/);
     if (!m) return null;
     const d = new Date(+m[1], +m[2] - 1, +m[3]);
-    const offset = { '昨天': -1, '今天': 0, '明天': 1, '昨晚': -1, '今晨': 0, '前天': -2, '后天': 2 }[rel];
+    const offset = { '昨天': -1, '昨日': -1, '今天': 0, '今日': 0, '明天': 1, '明日': 1, '昨晚': -1, '今晨': 0, '前天': -2, '后天': 2 }[rel];
     if (offset === undefined) return null;
     d.setDate(d.getDate() + offset);
     return fmtDateISO(d);
@@ -649,6 +658,11 @@
     if (extremeTemp !== undefined) {
       add('temp_extreme', '气温量级', 'fail', `${extremeTemp}℃ 超出地面气温的物理量级，需核对单位或数值。`);
     }
+    const tempClimate = tempVals.find(v => v <= -5);
+    const locText = `${meta.location || ''} ${text}`;
+    if (tempClimate !== undefined && TROPICAL_LOWLAND.some(p => locText.includes(p))) {
+      add('temp_climate', '气温与地理/季节相容性', 'fail', `${tempClimate}℃ 出现在热带低地城市，明显超出当地气候背景；需核对地点、日期或单位，不能直接当作“破纪录”事实。`);
+    }
 
     // 气压：统一换算到 hPa。地面气压物理区间约 800–1100 hPa
     const presVals = [...text.matchAll(/(\d{3,5}(?:\.\d+)?)\s*(hPa|hpa|百帕|kPa|kpa|千帕|mb|毫巴|帕)/g)]
@@ -724,7 +738,7 @@
     if (entity.geoIncompatible) {
       add('geo_consistency', '地理相容性', 'fail', `${entity.geoIncompatible}；当前地点不满足该现象的物理前提。`);
     }
-    add('reference', '比较基准', /(以来|史上|近\s*\d+\s*年|同期|破纪录)/.test(text) ? 'warn' : 'pass', /(以来|史上|近\s*\d+\s*年|同期|破纪录)/.test(text) ? '出现“史上/以来/同期”等比较，需要说明基准期、站网、资料年限。' : '未出现历史比较。');
+    add('reference', '比较基准', /(以来|史上|近\s*\d+\s*年|同期|破纪录|纪录|记录)/.test(text) ? 'warn' : 'pass', /(以来|史上|近\s*\d+\s*年|同期|破纪录|纪录|记录)/.test(text) ? '出现“史上/以来/同期/纪录”等比较，需要说明基准期、站网、资料年限。' : '未出现历史比较。');
     const periodQualifiers = ex.period_qualifiers || [];
     if (periodQualifiers.length) {
       const periodText = periodQualifiers.map(p => `${p.key}（${p.note}）`).join('、');
@@ -736,7 +750,7 @@
     add('source', '来源地址', hasSource ? 'pass' : 'warn', hasSource ? '已提供来源链接或可追溯地址。' : '缺来源 URL/账号/发布时间；置信度会降低。');
     add('data', '指数/数据版本', ex.phenomenon === '厄尔尼诺' && !/(Niño|Nino|ONI|候|旬|月|季|3\s*个月)/.test(text) ? 'fail' : 'pass', ex.phenomenon === '厄尔尼诺' ? '厄尔尼诺必须说明指数（Niño1+2/3/3.4/4/ONI）与时间尺度。' : '未涉及 ENSO 指数。');
     add('uncertainty', '不确定性', ex.is_forecast && (meta.claim_type || '').includes('观测') ? 'fail' : (ex.is_forecast ? 'warn' : 'pass'), ex.is_forecast ? '出现“预计/或/可能/将/前后”，应标为预测，不能当已发生。' : '未出现明显预测词。');
-    add('compare', '比较是否成立', /(最强|最大|最严重|史上|破纪录|百年一遇)/.test(text) && !ex.terms.length ? 'fail' : 'warn', '比较必须同指标、同时段、同范围、同基准；否则“最强”没有意义。');
+    add('compare', '比较是否成立', /(最强|最大|最严重|史上|破纪录|纪录|百年一遇)/.test(text) && !ex.terms.length ? 'fail' : 'warn', '比较必须同指标、同时段、同范围、同基准；否则“最强”没有意义。');
     add('causal', '因果', /(导致|造成|因为|由于)/.test(text) ? 'warn' : 'pass', /(导致|造成|因为|由于)/.test(text) ? '出现因果表述；相关不等于因果，需要额外证据。' : '未出现明显因果表述。');
     add('probability', '概率/重现期', /百年一遇/.test(text) ? 'warn' : 'pass', /百年一遇/.test(text) ? '百年一遇 = 年超越概率 1%，不是“一百年只发生一次”。' : '未出现重现期表述。');
     add('visual', '标题/视觉', /(最强|震撼|末日|恐怖|正在逼近)/.test(text) ? 'warn' : 'pass', /(最强|震撼|末日|恐怖|正在逼近)/.test(text) ? '标题/配图可能放大情绪；视觉强度不等于证据强度。' : '未出现明显情绪化词。');
@@ -759,7 +773,7 @@
 
     // 物理量级与时间逻辑：必须排在所有硬编码 B 分支之前，否则会被绕过
     const hasFail = (id) => checks.some(c => c.id === id && c.status === 'fail');
-    if (hasFail('wind_extreme') || hasFail('temp_extreme') || hasFail('pressure_extreme') || hasFail('humidity_range')) return 'C';
+    if (hasFail('wind_extreme') || hasFail('temp_extreme') || hasFail('temp_climate') || hasFail('pressure_extreme') || hasFail('humidity_range')) return 'C';
     if (hasFail('future_claim')) return 'D';
 
     if (/超级暴雨|超级大暴雨/.test(text)) return 'C';
@@ -789,7 +803,7 @@
       if (/超级暴雨/.test(text) && /(1000|1,000)\s*(mm|毫米)/i.test(text)) {
         return '这不是假新闻：核心降水数值可能有官方实况支撑；但“广东1000毫米”若省略“某站”，标题就以点代面，容易让人误以为整个广东都下了1000毫米。同时“超级暴雨”不是标准术语；“惹了龙王”是拟人化修辞，不是气象机制，必须区分单站极值与全省平均。';
       }
-      const specific = checks.filter(c => c.status !== 'pass' && ['term_consistency', 'vague_intensity', 'rainfall_extreme'].includes(c.id));
+      const specific = checks.filter(c => c.status !== 'pass' && ['term_consistency', 'vague_intensity', 'rainfall_extreme', 'temp_climate'].includes(c.id));
       if (specific.length) return `术语/量级冲突：${specific.map(c => c.note).join('；')}`;
       return '这句话存在术语/口径冲突：同一个词在不同标准下不是同一个量，不能直接下结论。';
     }
@@ -886,7 +900,7 @@
     if (!/(下雨|降雨|降水|有雨)/.test(text)) return null;
     if (/(暴雨|特大暴雨|大暴雨|雨量|降水量|\d+(?:\.\d+)?\s*(?:mm|毫米))/i.test(text)) return null;
     if (ex.is_forecast || String(meta.claim_type || '').includes('预测')) return null;
-    if (meta.time_window && meta.time_window !== '未说明') return null;
+    if (meta.time_window && !/^自然日 00[—\-]24/.test(meta.time_window) && meta.time_window !== '未说明') return null;
     const dateMatch = String(meta.event_time || '').match(/(20\d{2})-(\d{2})-(\d{2})/);
     if (!dateMatch) return null;
     const [date, y, m, d] = [dateMatch[0], dateMatch[1], dateMatch[2], dateMatch[3]];
