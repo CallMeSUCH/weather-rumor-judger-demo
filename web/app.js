@@ -766,16 +766,20 @@
     if (/特大暴雨/.test(text) && /1\s*小时/.test(text)) return 'C';
     const rainfallCheck = checks.find(c => c.id === 'rainfall_extreme');
     if (rainfallCheck && rainfallCheck.status === 'fail') return 'D';
-    if (/百年一遇/.test(text)) return 'B';
-    if (/(极大|最大)/.test(text) && /(风速|风力|风)/.test(text)) return 'B';
-    if (/(17\s*级|17级)/.test(text) && /超强台风/.test(text)) return 'B';
-    if (ex.phenomenon === '厄尔尼诺' && !/(Niño|Nino|ONI|候|旬|月|季|3\s*个月)/.test(text)) return 'D';
 
     const failIds = checks.filter(c => c.status === 'fail').map(c => c.id);
     if (failIds.includes('geo_consistency')) return 'C';
     if (failIds.includes('location_valid')) return 'D';
     if (failIds.includes('time') || failIds.includes('space') || failIds.includes('tense') || failIds.includes('data')) return 'D';
     if (failIds.includes('subject')) return 'D';
+    if (ex.phenomenon === '厄尔尼诺' && !/(Niño|Nino|ONI|候|旬|月|季|3\s*个月)/.test(text)) return 'D';
+
+    // 下列 B 只处理“时间、地点已经明确”的条件性/术语性说法；
+    // 缺时间或缺地点时，信息不足优先，不能因为命中术语就直接判 B。
+    if (/百年一遇/.test(text)) return 'B';
+    if (/(极大|最大)/.test(text) && /(风速|风力|风)/.test(text)) return 'B';
+    if (/(17\s*级|17级)/.test(text) && /超强台风/.test(text)) return 'B';
+
     if (ex.terms.length) return 'B';
     return 'D';
   }
@@ -798,7 +802,7 @@
       if (checks.some(c => c.id === 'source' && c.status === 'warn')) missing.push('可核验来源/观测数据');
       if (!ex.terms.length) missing.push('标准参数/雨量');
       const where = ex.phenomenon && ex.phenomenon !== '未识别'
-        ? `已识别到${ex.phenomenon}${meta.location ? `、${meta.location}` : ''}`
+        ? `已识别到${ex.phenomenon}${meta.location && meta.location !== '未说明' ? `、${meta.location}` : ''}`
         : '关键信息不足';
       return `${where}，但缺少${[...new Set(missing)].join('、') || '关键口径或证据'}。系统不猜，先判“信息不足”。`;
     }
