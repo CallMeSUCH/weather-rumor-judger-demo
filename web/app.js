@@ -878,11 +878,95 @@
     return items;
   }
 
-  function buildGenericResult(text, meta) {
+  async function verifySimpleRainClaim(text, meta, ex) {
+    if (!/(下雨|降雨|降水|有雨)/.test(text)) return null;
+    if (/(暴雨|特大暴雨|大暴雨|雨量|降水量|\d+(?:\.\d+)?\s*(?:mm|毫米))/i.test(text)) return null;
+    if (ex.is_forecast || String(meta.claim_type || '').includes('预测')) return null;
+    if (meta.time_window && meta.time_window !== '未说明') return null;
+    const dateMatch = String(meta.event_time || '').match(/(20\d{2})-(\d{2})-(\d{2})/);
+    if (!dateMatch) return null;
+    const [date, y, m, d] = [dateMatch[0], dateMatch[1], dateMatch[2], dateMatch[3]];
+    const station = WMO_STATIONS[meta.location] || WMO_STATIONS[ex.location_raw] || '';
+    if (!station) return null;
+
+    // 对“某天某地下雨了”这类是/否问题，默认自然日 00—24，
+    // 用 WMO SYNOP 站点记录判断：只要当天有 >0 mm 降水就算下雨。
+    meta.time_window = '自然日 00—24（默认）';
+    meta.time_scale = '自然日';
+    const dayStart = `${y}${m}${d}0000`;
+    const dayEnd = `${y}${m}${d}2359`;
+    let data;
+    try {
+      data = (await apiGet(`/api/evidence/ogimet/synop?station=${encodeURIComponent(station)}&start=${dayStart}&end=${dayEnd}`, 12000)).data;
+    } catch (err) {
+      return null;
+    }
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if (!items.length) return null;
+    const observed = items.filter(item => item.precip_mm !== null && item.precip_mm !== undefined && Number.isFinite(Number(item.precip_mm)));
+    if (!observed.length) return null;
+    const wetItems = observed.filter(item => Number(item.precip_mm) > 0);
+    const maxRain = Math.max(...observed.map(item => Number(item.precip_mm)));
+    const wet = wetItems.length > 0;
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const fullDay = date < today;
+    const sourceUrl = data.source_url || 'https://www.ogimet.com/synops.phtml.en';
+    const sourceName = `WMO SYNOP · ${meta.location || ex.location_raw}站 ${station}`;
+    const evidence = {
+      source: sourceName,
+      date,
+      data: wet
+        ? `站点报文显示当日有降水，最大单条降水 ${maxRain.toFixed(1)} mm。`
+        : `站点报文显示当日暂无 >0 mm 降水（${observed.length} 条记录）。`,
+      url: sourceUrl
+    };
+    if (wet) {
+      return {
+        verdict: 'A',
+        confidence: '中',
+        summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 有降水记录（最大单条 ${maxRain.toFixed(1)} mm），因此“${meta.location || ex.location_raw}下雨了”成立。`,
+        evidence,
+        check: { id: 'rain_observation', name: '自然日降水核验', status: 'pass', note: `${date} 有 >0 mm 降水记录；自然日口径按 00—24。` },
+        condition: '本条按自然日 00—24 核验；只要日降水 >0 mm 即算“下雨”，不要求达到暴雨量级。',
+        value: `${maxRain.toFixed(1)} mm（有降水）`
+      };
+    }
+    if (fullDay && observed.length >= 4) {
+      return {
+        verdict: 'E',
+        confidence: '中',
+        summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 的记录中没有 >0 mm 降水，因此“${meta.location || ex.location_raw}下雨了”不成立。`,
+        evidence,
+        check: { id: 'rain_observation', name: '自然日降水核验', status: 'fail', note: `${date} 全日无 >0 mm 降水记录；自然日口径按 00—24。` },
+        condition: '本条按自然日 00—24 核验；只要日降水 >0 mm 即算“下雨”，不要求达到暴雨量级。',
+        value: '0 mm（无降水）'
+      };
+    }
+    return {
+      verdict: 'D',
+      confidence: '低',
+      summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 目前没有 >0 mm 降水记录，但当天尚未结束，不能据此判为假；需要完整日观测或官方日值。`,
+      evidence,
+      check: { id: 'rain_observation', name: '自然日降水核验', status: 'warn', note: `${date} 暂无 >0 mm 降水记录，当前日未结束。` },
+      condition: '本条按自然日 00—24 核验；当前日未结束时，零降水记录不能直接判为“不下雨”。',
+      value: '0 mm（截至当前）'
+    };
+  }
+
+  function buildGenericResult(text, meta, rainObs = null) {
     const ex = extract(text);
     const checks = runChecks(text, meta, ex);
-    const verdict = decideVerdict(text, meta, ex, checks);
-    const confidence = verdict === 'B' ? '中' : (verdict === 'C' ? '中' : '低');
+    if (rainObs) {
+      const timeCheck = checks.find(c => c.id === 'time');
+      if (timeCheck) {
+        timeCheck.status = 'pass';
+        timeCheck.note = '自然日 00—24（默认）；已按站点降水记录核验。';
+      }
+      checks.unshift(rainObs.check);
+    }
+    const verdict = rainObs?.verdict || decideVerdict(text, meta, ex, checks);
+    const confidence = rainObs?.confidence || (verdict === 'B' ? '中' : (verdict === 'C' ? '中' : '低'));
     const nextSteps = [];
     if (!meta.publish_time) nextSteps.push('补发布时间；“昨天/今天/明天”要锚定到发布日。');
     if ((meta.time_window || '未说明') === '未说明') nextSteps.push('补时间窗口（08—08 / 20—20 / 自然日 / 滑动 24h）。');
@@ -906,7 +990,7 @@
       decomposition: [
         ['现象', ex.phenomenon],
         ['参数', ex.terms.length ? ex.terms.map(t => t.term).join('、') : '未匹配'],
-        ['数值', ex.quantities.length ? ex.quantities.join('；') : '未给出'],
+        ['数值', rainObs ? rainObs.value : (ex.quantities.length ? ex.quantities.join('；') : '未给出')],
         ['模糊词', ex.vague.length ? ex.vague.join('、') : '未识别'],
         ['时间', ex.time_raw],
         ['时段限定', ex.period_qualifiers.length ? ex.period_qualifiers.map(p => `${p.key}（${p.note}）`).join('、') : '未说明'],
@@ -914,16 +998,16 @@
         ['尺度', meta.time_scale || ex.time_scale],
         ['空间', meta.location || ex.location_raw],
         ['级别', meta.location_level || ex.location_level],
-        ['来源', meta.source_url || ex.source_url || '未提供'],
+        ['来源', meta.source_url || ex.source_url || (rainObs ? rainObs.evidence.source : '未提供')],
         ['确定性', meta.claim_type || ex.claim_type]
       ],
       loopholes: checks,
       terms: ex.terms,
       verdict,
       confidence,
-      summary: buildSummary(verdict, ex, meta, checks, text),
-      conditions: buildConditions(ex, meta),
-      evidence: suggestSources(ex),
+      summary: rainObs?.summary || buildSummary(verdict, ex, meta, checks, text),
+      conditions: rainObs ? [rainObs.condition, ...buildConditions(ex, meta)] : buildConditions(ex, meta),
+      evidence: rainObs ? [rainObs.evidence, ...suggestSources(ex)] : suggestSources(ex),
       next_steps: nextSteps.length ? nextSteps : ['补官方数据后再判断。'],
       official_urls: []
     };
@@ -985,13 +1069,13 @@
     return { ...result, caseId: null };
   }
 
-  function analyze(text, meta, caseId, preset = null) {
+  function analyze(text, meta, caseId, preset = null, rainObs = null) {
     if (caseId) {
       const c = getCase(caseId);
       if (c && caseMatchesMeta(c, meta)) return buildCaseResult(c, meta, text);
     }
     if (preset) return buildPresetResult(preset, meta, text);
-    return buildGenericResult(text, meta);
+    return buildGenericResult(text, meta, rainObs);
   }
 
   // ---------- home ----------
@@ -1519,8 +1603,10 @@
     locInput?.addEventListener('input', checkLoc);
     checkLoc();
 
-    $('#confirm-form')?.addEventListener('submit', (e) => {
+    let submitting = false;
+    $('#confirm-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (submitting) return;
       let publish = $('#f-publish').value.trim();
       let eventTime = $('#f-event').value.trim();
       const derived = rel ? deriveRelativeEvent(p.text, publish) : null;
@@ -1557,7 +1643,13 @@
       };
       state.meta = meta;
       state.liveFacts = [];
-      state.result = analyze(p.text, meta, caseId, p.preset);
+      submitting = true;
+      if (!caseId && !p.preset && /(下雨|降雨|降水|有雨)/.test(p.text)) {
+        showToast('正在核验自然日降水记录…');
+      }
+      const rainObs = caseId || p.preset ? null : await verifySimpleRainClaim(p.text, meta, p.extracted).catch(() => null);
+      state.result = analyze(p.text, meta, caseId, p.preset, rainObs);
+      submitting = false;
       location.hash = '#/result';
     });
   }
