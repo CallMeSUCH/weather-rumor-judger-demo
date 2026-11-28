@@ -159,7 +159,8 @@
   // ---------- extraction ----------
   const PHENOMENA = [
     { key: '台风', words: ['台风', '热带气旋', '超强台风', '强台风', '登陆'] },
-    { key: '暴雨', words: ['暴雨', '特大暴雨', '大暴雨', '降水', '雨量', '内涝', '降雨'] },
+    { key: '降雨', words: ['下雨', '降雨', '降水'] },
+    { key: '暴雨', words: ['暴雨', '特大暴雨', '大暴雨', '雨量', '内涝'] },
     { key: '高温', words: ['高温', '热浪', '最热', '酷热', '暑热'] },
     { key: '寒潮', words: ['寒潮', '极寒', '低温', '降温', '冰冻', '寒潮'] },
     { key: '干旱', words: ['干旱', '旱情', '特旱', '气象干旱'] },
@@ -400,29 +401,42 @@
     else if (/(过程|连续|累计)/.test(text)) timeWindow = '过程累计';
 
     let timeScale = '未说明';
+    const textWithoutDate = text.replace(/20\d{2}\s*[年\-\/.]\s*\d{1,2}\s*[月\-\/.]\s*\d{1,2}/g, ' ');
     if (/(3\s*个月|三个月|ONI)/.test(text)) timeScale = '3 个月滑动';
     else if (/1\s*小时/.test(text)) timeScale = '1 小时';
     else if (/(24\s*小时|单日)/.test(text)) timeScale = '24 小时';
+    else if (/(特大暴雨|大暴雨|暴雨)/.test(text)) timeScale = '24 小时';
     else if (/3\s*秒/.test(text)) timeScale = '3 秒';
     else if (/候/.test(text)) timeScale = '候（5 天）';
     else if (/旬/.test(text)) timeScale = '旬（10 天）';
-    else if (/月/.test(text)) timeScale = '月';
-    else if (/季/.test(text)) timeScale = '季';
+    else if (/月/.test(textWithoutDate)) timeScale = '月';
+    else if (/季/.test(textWithoutDate)) timeScale = '季';
 
     let locationRaw = '未说明';
     let locationLevel = '未说明';
     // 候选地名：不依赖白名单，用来发现“写了但库里没有”的地名
     const placeCandidates = Array.from(new Set(
       text.match(PLACE_RE) || []
-    )).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+    )).filter(w => !PLACE_STOP.includes(w));
 
     const station = STATIONS.find(s => text.includes(s));
     const sea = SEA_AREAS.find(s => text.includes(s));
-    const place = LOCATIONS.find(s => text.includes(s));
+    const regionRank = (name) => {
+      const regions = state.data.regions;
+      if (regions?.counties?.includes(name)) return 2;
+      if (regions?.cities?.includes(name)) return 1;
+      return 0;
+    };
+    const place = LOCATIONS
+      .filter(s => text.includes(s))
+      .sort((a, b) => regionRank(b) - regionRank(a) || b.length - a.length)[0];
     const knownCand = placeCandidates.find(isKnownPlace);
     if (station) { locationRaw = station; locationLevel = '站点'; }
     else if (sea) { locationRaw = sea; locationLevel = '海区'; }
-    else if (place) { locationRaw = place; locationLevel = '省/市'; }
+    else if (place) {
+      locationRaw = place;
+      locationLevel = regionRank(place) === 1 ? '城市' : '省/市';
+    }
     else if (knownCand) {
       locationRaw = knownCand;
       locationLevel = /(县|区|镇|乡)$/.test(knownCand) ? '区县' : '省/市';
@@ -554,7 +568,7 @@
     const cands = Array.from(new Set([
       ...(ex.place_candidates || []),
       ...(String(meta.location || '').match(PLACE_RE) || [])
-    ])).filter(w => !PLACE_STOP.some(s => w.includes(s)));
+    ])).filter(w => !PLACE_STOP.includes(w));
     out.candidates = cands;
 
     const isVerified = (c) => isKnownPlace(c);
@@ -775,7 +789,19 @@
       if (specific.length) return `术语/量级冲突：${specific.map(c => c.note).join('；')}`;
       return '这句话存在术语/口径冲突：同一个词在不同标准下不是同一个量，不能直接下结论。';
     }
-    if (verdict === 'D') return '关键信息不足：时间、地点、指数或口径缺失。系统不猜，先判“信息不足”。';
+    if (verdict === 'D') {
+      const missing = [];
+      if (checks.some(c => c.id === 'subject' && c.status === 'fail')) missing.push('天气现象');
+      if (checks.some(c => c.id === 'time' && c.status === 'fail')) missing.push('事件时段/时间窗口');
+      if (checks.some(c => c.id === 'location_valid' && c.status === 'fail')) missing.push('可核实地点');
+      if (checks.some(c => c.id === 'data' && c.status === 'fail')) missing.push('指数/数据版本');
+      if (checks.some(c => c.id === 'source' && c.status === 'warn')) missing.push('可核验来源/观测数据');
+      if (!ex.terms.length) missing.push('标准参数/雨量');
+      const where = ex.phenomenon && ex.phenomenon !== '未识别'
+        ? `已识别到${ex.phenomenon}${meta.location ? `、${meta.location}` : ''}`
+        : '关键信息不足';
+      return `${where}，但缺少${[...new Set(missing)].join('、') || '关键口径或证据'}。系统不猜，先判“信息不足”。`;
+    }
     if (verdict === 'B') {
       if (checks.some(c => c.id === 'long_series')) {
         return '术语基本对得上，但“1959 年以来全市平均最大”需要北京长期站网/插值序列；当前只有公开再分析点，不能证明或否定。需补 24h 窗口、站网和官方序列。';
