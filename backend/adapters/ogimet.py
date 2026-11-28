@@ -56,6 +56,9 @@ def _parse_line(line: str) -> dict | None:
         tokens = tokens[:tokens.index("333")]
     temp = dew = msl = stn = None
     wind_dir = wind_speed = precip = None
+    precip_trace = False
+    precip_period_h = None
+    weather_code = weather_past1 = weather_past2 = None
     for tok in tokens:
         if re.fullmatch(r"1[01]\d{3}", tok) and temp is None:
             temp = _temp(tok)
@@ -71,7 +74,26 @@ def _parse_line(line: str) -> dict | None:
             wind_dir = int(tok[1:3]) * 10
             wind_speed = int(tok[3:5])
         elif re.fullmatch(r"6\d{4}", tok) and precip is None:
-            precip = int(tok[1:]) / 10.0
+            # 6RRRt: RRR = 000 no precipitation, 001-988 mm,
+            # 989 = >=989 mm, 990 = trace, 991-999 = 0.1-0.9 mm.
+            rrr = int(tok[1:4])
+            t = int(tok[4])
+            if rrr == 0:
+                precip = 0.0
+            elif rrr <= 988:
+                precip = float(rrr)
+            elif rrr == 989:
+                precip = 989.0
+            elif rrr == 990:
+                precip = 0.0
+                precip_trace = True
+            else:
+                precip = (rrr - 990) / 10.0
+            precip_period_h = {1: 6, 2: 12, 3: 18, 4: 24, 5: 1, 6: 2, 7: 3, 8: 9, 9: 15}.get(t)
+        elif re.fullmatch(r"7\d{4}", tok) and weather_code is None:
+            weather_code = int(tok[1:3])
+            weather_past1 = int(tok[3])
+            weather_past2 = int(tok[4])
     return {
         "station": station,
         "datetime_utc": dt.strftime("%Y-%m-%d %H:%M"),
@@ -82,6 +104,11 @@ def _parse_line(line: str) -> dict | None:
         "wind_dir_deg": wind_dir,
         "wind_speed_ms": wind_speed,
         "precip_mm": precip,
+        "precip_trace": precip_trace,
+        "precip_period_h": precip_period_h,
+        "weather_code": weather_code,
+        "weather_past1": weather_past1,
+        "weather_past2": weather_past2,
         "raw": line.strip(),
     }
 

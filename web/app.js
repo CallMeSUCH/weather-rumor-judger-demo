@@ -905,12 +905,16 @@
     if (!items.length) return null;
     const observed = items.filter(item => item.precip_mm !== null && item.precip_mm !== undefined && Number.isFinite(Number(item.precip_mm)));
     if (!observed.length) return null;
-    const wetItems = observed.filter(item => Number(item.precip_mm) > 0);
+    const wetItems = observed.filter(item => Number(item.precip_mm) > 0 || item.precip_trace === true);
     const maxRain = Math.max(...observed.map(item => Number(item.precip_mm)));
     const wet = wetItems.length > 0;
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const fullDay = date < today;
+    const fullDay = date < today || (date === today && observed.length >= 4);
+    const lastObs = observed[observed.length - 1];
+    const lastLocal = lastObs?.datetime_utc
+      ? new Date(`${lastObs.datetime_utc.replace(' ', 'T')}:00Z`).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })
+      : '';
     const sourceUrl = data.source_url || 'https://www.ogimet.com/synops.phtml.en';
     const sourceName = `WMO SYNOP · ${meta.location || ex.location_raw}站 ${station}`;
     const evidence = {
@@ -918,7 +922,7 @@
       date,
       data: wet
         ? `站点报文显示当日有降水，最大单条降水 ${maxRain.toFixed(1)} mm。`
-        : `站点报文显示当日暂无 >0 mm 降水（${observed.length} 条记录）。`,
+        : `站点报文显示当日暂无 >0 mm 降水（${observed.length} 条记录，最后一条 ${lastLocal || lastObs?.datetime_utc || '—'}）。`,
       url: sourceUrl
     };
     if (wet) {
@@ -936,9 +940,9 @@
       return {
         verdict: 'E',
         confidence: '中',
-        summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 的记录中没有 >0 mm 降水，因此“${meta.location || ex.location_raw}下雨了”不成立。`,
+        summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 的记录中没有 >0 mm 降水${date === today ? `（截至 ${lastLocal || lastObs?.datetime_utc || '最后一次报文'}）` : ''}，因此“${meta.location || ex.location_raw}下雨了”不成立。`,
         evidence,
-        check: { id: 'rain_observation', name: '自然日降水核验', status: 'fail', note: `${date} 全日无 >0 mm 降水记录；自然日口径按 00—24。` },
+        check: { id: 'rain_observation', name: '自然日降水核验', status: 'fail', note: `${date} 无 >0 mm 降水记录；自然日口径按 00—24。` },
         condition: '本条按自然日 00—24 核验；只要日降水 >0 mm 即算“下雨”，不要求达到暴雨量级。',
         value: '0 mm（无降水）'
       };
@@ -946,10 +950,10 @@
     return {
       verdict: 'D',
       confidence: '低',
-      summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 目前没有 >0 mm 降水记录，但当天尚未结束，不能据此判为假；需要完整日观测或官方日值。`,
+      summary: `按自然日 00—24（默认），${sourceName} 在 ${date} 目前没有 >0 mm 降水记录，但可用报文不足，不能据此判为假；需要完整日观测或官方日值。`,
       evidence,
-      check: { id: 'rain_observation', name: '自然日降水核验', status: 'warn', note: `${date} 暂无 >0 mm 降水记录，当前日未结束。` },
-      condition: '本条按自然日 00—24 核验；当前日未结束时，零降水记录不能直接判为“不下雨”。',
+      check: { id: 'rain_observation', name: '自然日降水核验', status: 'warn', note: `${date} 暂无 >0 mm 降水记录，可用报文不足。` },
+      condition: '本条按自然日 00—24 核验；可用报文不足时，零降水记录不能直接判为“不下雨”。',
       value: '0 mm（截至当前）'
     };
   }
